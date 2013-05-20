@@ -89,7 +89,7 @@
   "Possible user init files to be profiled.")
 
 (defcustom esup-results-file "~/.esup-results.el"
-  "Where to save the results of profiling")
+  "Where to save the results of profiling.")
 
 (defcustom esup-low-percentage 3
   "Percentage which should be considered low.
@@ -200,15 +200,14 @@ grayed out.")
       results)))
 
 (defun esup-result-from-benchmark (file start end benchmark)
-  "Build an `esup-result' from FILE, START, END and the list
-BENCHMARK."
+  "Return class `esup-result' from FILE, START, END and BENCHMARK."
   (esup-result "esup-result"
                :file file :start-point start :end-point end :exec-time (nth 0 benchmark)
                :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark)))
 
 (defun esup-profile-sexp (start end)
   "Profile the sexp between START and END in the current buffer.
-Returns a list of `esup-result'."
+Returns a list of class `esup-result'."
   (let* ((sexp (car (read-from-string
                      (buffer-substring-no-properties start end))))
          (file-name (buffer-file-name))
@@ -220,7 +219,7 @@ Returns a list of `esup-result'."
                                 (point)
                                 (progn (forward-sexp 1) (point))))
           (esup-profile-file load-file-name))
-      ;; Have this function always return a list of results to
+      ;; Have this function always return a list of `esup-result' to
       ;; simplify processing because a loaded file will return a list
       ;; of results.
       (list (esup-result-from-benchmark file-name start end (benchmark-run (eval sexp)))))))
@@ -239,7 +238,7 @@ Returns a list of `esup-result'."
   (loop for result in results
         with total-time = (esup-total-exec-time results)
         do
-        (oset result :percentage (* 100 (/ (get-exec-time result) 
+        (oset result :percentage (* 100 (/ (get-exec-time result)
                                            total-time)))))
 
 
@@ -304,14 +303,13 @@ Commands:
     (kill-emacs)))
 
 (defun esup-process-sentinel (process status)
-  "Monitor changes in the *esup* process."
+  "Monitor PROCESS for change in STATUS."
   (cond ((string= status "finished\n") (esup-display-results))
         (t (insert (format "Process %s %s" process status)))))
 
 ;;;###autoload
 (defun esup ()
-  "Start a new emacs in the background and profile its startup
-time."
+  "Profile the startup time of Emacs in the background."
   (interactive)
   (with-current-buffer (get-buffer-create "*esup-log*")
     (erase-buffer)
@@ -361,7 +359,7 @@ time."
       (esup-update-percentages results)
       (loop for result in results
             do (insert (render result) "\n"))
-      (pop-to-buffer (current-buffer))))) 
+      (pop-to-buffer (current-buffer)))))
 
 (defmethod render ((obj esup-result))
   "Render fields with ESUP-RESULT and return the string."
@@ -370,13 +368,13 @@ time."
     (let* ((short-file (file-name-nondirectory file)))
       (esup-propertize-string
        short-file
-       'font-lock-face 'esup-file 
+       'font-lock-face 'esup-file
        'mouse-face 'highlight
        'full-file file
        'follow-link 'esup-open-link
        'start-point start-point
        'keymap 'esup-open-link)
-      
+
       (concat
        short-file
 
@@ -387,7 +385,7 @@ time."
        "\n"))))
 
 (defun esup-massage-results (results)
-  "Remove all results that took 0 time and sort the remainder."
+  "Remove inconsequential entries and sort RESULTS."
     ;; (cl-delete-if (lambda (a) (< a 0.01)) results :key 'get-exec-time)
     (cl-sort results '> :key 'get-exec-time))
 
@@ -495,4 +493,4 @@ time."
 
 (provide 'esup)
 
-;; esup.el ends here
+;;; esup.el ends here
