@@ -3,6 +3,10 @@
 ;; Copyright (C) 2013 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jchaf.com>
+;; Maintainer:  Joe Schafer <joe@jschaf.com>
+;; Created: 19 May 2013
+;; Version:  0.2
+;; Keywords:  emacs-lisp, elisp, profile
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -15,12 +19,25 @@
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
+
+;;; Installation:
 ;;
-;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; Place esup.el on your `load-path' by adding this to your
+;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
+;;
+;; (add-to-list 'load-path "~/dir/to-esup")
+;;
+;; Load the code:
+;;
+;; (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
+;;
+;; M-x `esup' to profile your Emacs startup and display the results.
+
 
 ;;; Commentary:
-
+;;
+;; The most recent code is always at http://github.com/jschaf/esup
+;;
 ;; This is to easily profile your Emacs init file (or any other
 ;; script-like Emacs Lisp file, for that matter).
 
@@ -45,84 +62,111 @@
 ;; of your init file in some conditional clause, you'll have to remove
 ;; that for getting finer granularity.
 
-;;; Usage:
-
-;; Start emacs as follows:
-;;
-;;    emacs -Q -l <PATH>/esup.el -f esup
-;;
-;; with <PATH> being the path to where this file resides.
-
-;;; Download:
-
-;;  You can always get the latest version from
-;;       http://randomsample.de/profile-dotemacs.el
-
-
-;;; Code:
 
 (require 'benchmark)
+(require 'eieio)
 (eval-when-compile
  (require 'cl-lib))
 
+;;; Code:
+
+
 ;; User variables
 
-(defconst esup-user-init-files '("~/.emacs"
+(defgroup esup nil
+  "A major mode for the Emacs Start Up Profiler."
+  :prefix "esup-"
+  :group 'languages)
+
+(defcustom esup-mode-hook nil
+  "Hook to run when starting esup mode."
+  :type 'hook
+  :group 'esup)
+
+(defcustom esup-user-init-files '("~/.emacs"
                                  "~/.emacs.el"
                                  "~/.emacs.d/init.el")
   "Possible user init files to be profiled.")
 
-(defvar esup-low-percentage 3
+(defcustom esup-results-file "~/.esup-results.el"
+  "Where to save the results of profiling")
+
+(defcustom esup-low-percentage 3
   "Percentage which should be considered low.
 All sexp's with a running time below this percentage will be
 grayed out.")
 
-(defface esup-time-face
-  '((((background dark)) (:background "OrangeRed1"))
-    (t (:background "red3")))
-  "Background color to indicate percentage of total time.")
+(defface esup-line-number
+  '((t :inherit font-lock-keyword-face))
+  "Face for displaying line numbers in the *esup* buffer."
+  :group 'esup
+  :version "22.1")
 
-(defface esup-low-percentage-face
-  '((((background dark)) (:foreground "gray25"))
-    (t (:foreground "gray75")))
-  "Face for sexps below `esup-low-percentage'.")
+(defface esup-column-number
+  '((t :inherit font-lock-doc-face))
+  "Face for displaying column numbers in the *esup* buffer."
+  :group 'esup
+  :version "22.1")
 
-(defface esup-highlight-face
-  '((((background dark)) (:background "blue"))
-    (t (:background "yellow")))
-  "Highlight face for benchmark results.")
+(defface esup-file
+  '((t :inherit font-lock-function-name-face))
+  "Face for displaying the file name in the *esup* buffer."
+  :group 'esup
+  :version "22.1")
 
-(defun esup-trim-left (s)
-  "Remove whitespace at the beginning of S."
-  (if (string-match "\\`[ \t\n\r]+" s)
-      (replace-match "" t t s)
-    s))
+(defvar esup-process nil
+  "The current esup process.")
 
-(defun esup-trim-right (s)
-  "Remove whitespace at the end of S."
-  (if (string-match "[ \t\n\r]+\\'" s)
-      (replace-match "" t t s)
-    s))
+;;; Model - all the data
 
-(defun esup-trim (s)
-  "Remove whitespace at the beginning and end of S."
-  (esup-trim-left (esup-trim-right s)))
+(defclass esup-result ()
+  ((file :initarg :file
+         :initform ""
+         :type string
+         :custom string
+         :accessor get-file-name
+         :documentation "The file location for the result.")
+   (start-point :initarg :start-point
+                :initform 0
+                :type number
+                :accessor get-start-point
+                :documentation "The start position of the benchmarked expression.")
+   (end-point :initarg :end-point
+              :initform 0
+              :type number
+              :accessor get-end-point
+              :documentation "The end position of the benchmarked expression.")
+   (exec-time :initarg :exec-time
+              :initform 0
+              :type number
+              :accessor get-exec-time
+              :documentation)
+   (gc-number :initarg :gc-number
+              :initform 0
+              :type number
+              :accessor get-gc-number
+              :documentation "The number of garbage collections that ran.")
+   (gc-time :initarg :gc-time
+            :initform 0
+            :type number
+            :accessor get-gc-time
+            :documentation "The time taken by garbage collection.")
+   (percentage :initarg :percentage
+               :initform 0
+               :type number
+               :accessor get-percentage
+               :documentation "The percentage of time taken by expression."))
+  "A record of benchmarked results.")
 
-;; Main function
 (defun esup-profile-file (file-name)
   "Profile FILE-NAME and return the benchmarked expressions."
-  (let ((clean-file (esup-trim file-name))
+  (let ((clean-file (esup-chomp file-name))
         abs-file-path)
-    (message "esup-profile-file dirty %s" clean-file)
-    ;; Either clean up the string or look up the variable
-    (if (intern-soft clean-file)
-        (progn
-          (message "esup-profile-file interning file %s %s" (symbol-value (intern-soft clean-file)) (intern-soft clean-file))
-          (setq clean-file (symbol-value (intern-soft clean-file))))
-      (message "Don't have an intern")
-      (setq clean-file (replace-regexp-in-string "\"" "" clean-file)))
+    ;; Either look up the variable or remove the quotes
+    (setq clean-file
+          (or (symbol-value (intern-soft clean-file))
+              (replace-regexp-in-string "\"" "" clean-file)))
 
-    (message "esup-profile-file clean %s" clean-file)
     (setq abs-file-path
           (locate-file clean-file load-path
                        ;; Add empty string in case the user has
@@ -139,8 +183,7 @@ grayed out.")
     ;; The only way to reliably figure out if we're done is to compare
     ;; sexp positions.  `forward-sexp' handles all the complexities of
     ;; white-space and comments.
-    (let ((file-name (buffer-file-name))
-          (buffer-read-only t)
+    (let ((buffer-read-only t)
           (last-start -1)
           (end (progn (forward-sexp 1) (point)))
           (start (progn (forward-sexp -1) (point)))
@@ -156,13 +199,19 @@ grayed out.")
         (setq start (point)))
       results)))
 
-(defun esup-profile-sexp (start end)
-  "Profile the sexp between points START and END in the current buffer.
+(defun esup-result-from-benchmark (file start end benchmark)
+  "Build an `esup-result' from FILE, START, END and the list
+BENCHMARK."
+  (esup-result "esup-result"
+               :file file :start-point start :end-point end :exec-time (nth 0 benchmark)
+               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark)))
 
-Returns a list of benchmarked expressions."
-  (let* ((sexp (progn (goto-char start) (sexp-at-point)))
-         (sexp-str (format "%s" sexp))
-         (eval (eval sexp))
+(defun esup-profile-sexp (start end)
+  "Profile the sexp between START and END in the current buffer.
+Returns a list of `esup-result'."
+  (let* ((sexp (car (read-from-string
+                     (buffer-substring-no-properties start end))))
+         (file-name (buffer-file-name))
          load-file-name)
     (if (looking-at "(load ")
         (progn
@@ -171,105 +220,279 @@ Returns a list of benchmarked expressions."
                                 (point)
                                 (progn (forward-sexp 1) (point))))
           (esup-profile-file load-file-name))
-      (list (list file-name start end (benchmark-run (eval sexp)))))))
+      ;; Have this function always return a list of results to
+      ;; simplify processing because a loaded file will return a list
+      ;; of results.
+      (list (esup-result-from-benchmark file-name start end (benchmark-run (eval sexp)))))))
 
-(defun esup-start-profile ()
+(defun esup-total-exec-time (results)
+  "Calculate the total execution time of RESULTS."
+  (loop for result in results
+        sum (get-exec-time result) into total-time
+        finally return total-time))
+
+(defun esup-update-percentages (results)
+  "Add the percentage of exec-time to each item in RESULTS."
+  ;; (dolist (result results)
+  ;;   (oset result :percentage 2)
+  ;;   )
+  (loop for result in results
+        with total-time = (esup-total-exec-time results)
+        do
+        (oset result :percentage (* 100 (/ (get-exec-time result) 
+                                           total-time)))))
+
+
+(defvar esup-mode-map
+  (let ((map (make-sparse-keymap)))
+    (set-keymap-parent map button-buffer-map)
+
+    ;; (define-key map [mouse-2] 'esup-follow-mouse)
+    ;; (define-key map "\C-c\C-b" 'esup-go-back)
+    ;; (define-key map "\C-c\C-f" 'esup-go-forward)
+    ;; (define-key map "\C-c\C-c" 'esup-follow-symbol)
+    ;; ;; Documentation only, since we use minor-mode-overriding-map-alist.
+    ;; (define-key map "\r" 'esup-follow)
+    map)
+  "Keymap for `esup-mode'.")
+
+;;; Controller - the entry points
+(defun esup-mode ()
+  "Major mode for controlling the *esup* buffer.
+
+Commands:
+\\{esup-mode-map}"
+  (interactive)
+  (kill-all-local-variables)
+  (use-local-map esup-mode-map)
+  (setq mode-name "esup")
+  (setq major-mode 'esup-mode)
+
+  (view-mode)
+
+  (set (make-local-variable 'word-wrap) t)
+  (set (make-local-variable 'view-no-disable-on-exit) t)
+  ;; With Emacs 22 `view-exit-action' could delete the selected window
+  ;; disregarding whether the help buffer was shown in that window at
+  ;; all.  Since `view-exit-action' is called with the help buffer as
+  ;; argument it seems more appropriate to have it work on the buffer
+  ;; only and leave it to `view-mode-exit' to delete any associated
+  ;; window(s).
+  (setq view-exit-action
+	(lambda (buffer)
+	  ;; Use `with-current-buffer' to make sure that `bury-buffer'
+	  ;; also removes BUFFER from the selected window.
+	  (with-current-buffer buffer
+	    (bury-buffer))))
+
+  ;; (set (make-local-variable 'revert-buffer-function)
+  ;;      'help-mode-revert-buffer)
+
+  (run-mode-hooks 'esup-mode-hook))
+
+(defun esup-batch ()
+  "Function for the profiled Emacs to run."
   (let ((init-file (car (cl-remove-if-not #'file-exists-p
                                           esup-user-init-files)))
         results)
-    (message "esup profiling init file: %s" init-file)
     (add-to-list 'load-path (file-name-directory init-file))
     (setq results (esup-profile-file init-file))
-    (princ results)
+    (find-file esup-results-file)
+    (erase-buffer)
+    (prin1 results (current-buffer))
+    (basic-save-buffer)
     (kill-emacs)))
 
+(defun esup-process-sentinel (process status)
+  "Monitor changes in the *esup* process."
+  (cond ((string= status "finished\n") (esup-display-results))
+        (t (insert (format "Process %s %s" process status)))))
+
+;;;###autoload
 (defun esup ()
-  "Load first existent init file from `esup-files' and benchmark its sexps."
+  "Start a new emacs in the background and profile its startup
+time."
   (interactive)
-  (if noninteractive (esup-start-profile) (esup-start-process)))
+  (with-current-buffer (get-buffer-create "*esup-log*")
+    (erase-buffer)
+    (switch-to-buffer-other-window (current-buffer)))
+  ;; TODO: use full path to emacs
+  (setq esup-process
+        (start-process "*esup*" "*esup-log*"
+                       "emacs"
+                       "-q"
+                       "--debug-init"
+                       "--batch"
+                       "-l" "~/.emacs.d/el-get/esup/esup.el"
+                       "-f" "esup-batch"))
+  (set-process-sentinel esup-process 'esup-process-sentinel))
 
-(defun esup-start-process ()
-  "Start a new emacs and profile its startup time."
-  (with-current-buffer (get-buffer-create "*esup*")
-    (erase-buffer))
-  (start-process "*esup*" "*esup*"
-                 "emacs"
-                 "-q"
-                 "--batch"
-                 "-l" "~/.emacs.d/el-get/esup/esup.el"
-                 "-f" "esup"))
-;; Helper functions
+(defun esup-buffer ()
+  "Initialize and return the *esup* buffer."
+  (let ((buf (get-buffer esup-display-buffer)))
+    (if buf
+        buf
+      (setq buf (generate-new-buffer esup-display-buffer))
+      (with-current-buffer buf
+        (esup-mode)))
+    buf))
 
-(defun esup-show-results (results)
-  "Show timings from RESULTS in current buffer."
-  (let ((totaltime (esup-totaltime results))
-	current percentage ov)
-    (while results
-      (let* ((current (pop results))
-	     (ov (make-overlay (car current) (cadr current)))
-	     (current (car (last current)))
-	     (percentage (/ (+ (car current) (nth 2 current))
-			    totaltime))
-	     col benchstr lowface)
-	(setq col
-	      (esup-percentage-color
-	       percentage
-	       (if (color-defined-p (face-background 'default))
-		   (face-background 'default)
-		   "black")
-	       (face-background 'esup-time-face)))
-	(setq percentage (round (* 100 percentage)))
-	(setq benchstr (esup-make-benchstr current))
-	(overlay-put ov 'help-echo benchstr)
-	(if (and (numberp esup-low-percentage)
-		 (< percentage esup-low-percentage))
-	    (overlay-put ov 'face 'esup-low-percentage-face)
-	  (overlay-put ov 'before-string
-		       (propertize benchstr
-				   'face 'esup-highlight-face))
-	  (overlay-put ov 'face
-		       `(:background ,col)))))
-    (setq ov (make-overlay (1- (point-max)) (point-max)))
-    (overlay-put ov 'after-string
-		 (propertize
-		  (format "\n-----------------\nTotal time: %.2fs\n"
-			  totaltime)
-		  'face 'esup-highlight-face))))
+(defun esup-follow-link (pos)
+  "Follow the link that was clicked at point POS."
+  (let ((file (get-text-property pos 'full-file))
+        (start-point (get-text-property pos 'start-point)))
+    (message "Opening link to %s" file)
+    (find-file-other-window file)
+    (goto-char start-point)))
 
-(defun esup-totaltime (results)
-  "Calculate total time of RESULTS."
-  (let ((totaltime 0))
-    (mapc (lambda (x)
-	    (let ((cur (car (last x))))
-	      (setq totaltime (+ totaltime (car cur) (nth 2 cur)))))
-	  results)
-    totaltime))
+
+;;; View - rendering functions
 
-(defun esup-percentage-color (percent col-begin col-end)
-  "Calculate color according to PERCENT between COL-BEGIN and COL-END."
-  (let* ((col1 (color-values col-begin))
-	 (col2 (color-values col-end))
-	 (col
-	  (mapcar (lambda (c)
-		    (round
-		     (+ (* (- 1 percent) (nth c col1))
-			(* percent (nth c col2)))))
-		  '(0 1 2))))
-    (format "RGB:%04x/%04x/%04x"
-	    (car col)
-	    (nth 1 col)
-	    (nth 2 col))))
+(defvar esup-display-buffer "*esup*"
+  "The buffer in which to display benchmark results.")
 
-(defun esup-make-benchstr (timings)
-  "Create descriptive benchmark string from TIMINGS."
-  (format
-   (concat
-    "<Percentage: %d ; "
-    "Time: %.2f ; "
-    "Number of GC: %d ; "
-    "Time for GC: %.2f>\n")
-   percentage
-   (car timings) (nth 1 timings) (nth 2 timings)))
+(defun esup-display-results ()
+  "Display the results of the benchmarking."
+  (interactive)
+  (let ((results (esup-massage-results (esup-read-results)))
+        (inhibit-read-only t))
+    (with-current-buffer (esup-buffer)
+      (erase-buffer)
+      (esup-update-percentages results)
+      (loop for result in results
+            do (insert (render result) "\n"))
+      (pop-to-buffer (current-buffer))))) 
 
+(defmethod render ((obj esup-result))
+  "Render fields with ESUP-RESULT and return the string."
+  (with-slots (file start-point end-point exec-time percentage)
+      obj
+    (let* ((short-file (file-name-nondirectory file)))
+      (esup-propertize-string
+       short-file
+       'font-lock-face 'esup-file 
+       'mouse-face 'highlight
+       'full-file file
+       'follow-link 'esup-open-link
+       'start-point start-point
+       'keymap 'esup-open-link)
+      
+      (concat
+       short-file
+
+       ":n  "
+       (format "%.3fsec" exec-time)
+       "   "
+       (format "%d%%" percentage)
+       "\n"))))
+
+(defun esup-massage-results (results)
+  "Remove all results that took 0 time and sort the remainder."
+    ;; (cl-delete-if (lambda (a) (< a 0.01)) results :key 'get-exec-time)
+    (cl-sort results '> :key 'get-exec-time))
+
+(defun esup-read-results ()
+  "Read results from `esup-results-file' and return the list."
+  (let (results)
+    (with-current-buffer (find-file-noselect esup-results-file)
+      (goto-char (point-min))
+      (setq results (read (current-buffer)))
+      (kill-buffer (current-buffer)))
+    results))
+
+
+
+;; (defun esup-show-results (results)
+;;   "Show timings from RESULTS in current buffer."
+;;   (let ((totaltime (esup-totaltime results))
+;; 	current percentage ov)
+;;     (while results
+;;       (let* ((current (pop results))
+;; 	     (ov (make-overlay (car current) (cadr current)))
+;; 	     (current (car (last current)))
+;; 	     (percentage (/ (+ (car current) (nth 2 current))
+;; 			    totaltime))
+;; 	     col benchstr lowface)
+;; 	(setq col
+;; 	      (esup-percentage-color
+;; 	       percentage
+;; 	       (if (color-defined-p (face-background 'default))
+;; 		   (face-background 'default)
+;; 		   "black")
+;; 	       (face-background 'esup-time-face)))
+;; 	(setq percentage (round (* 100 percentage)))
+;; 	(setq benchstr (esup-make-benchstr current))
+;; 	(overlay-put ov 'help-echo benchstr)
+;; 	(if (and (numberp esup-low-percentage)
+;; 		 (< percentage esup-low-percentage))
+;; 	    (overlay-put ov 'face 'esup-low-percentage-face)
+;; 	  (overlay-put ov 'before-string
+;; 		       (propertize benchstr
+;; 				   'face 'esup-highlight-face))
+;; 	  (overlay-put ov 'face
+;; 		       `(:background ,col)))))
+;;     (setq ov (make-overlay (1- (point-max)) (point-max)))
+;;     (overlay-put ov 'after-string
+;; 		 (propertize
+;; 		  (format "\n-----------------\nTotal time: %.2fs\n"
+;; 			  totaltime)
+;; 		  'face 'esup-highlight-face))))
+
+
+
+;; (defun esup-percentage-color (percent col-begin col-end)
+;;   "Calculate color according to PERCENT between COL-BEGIN and COL-END."
+;;   (let* ((col1 (color-values col-begin))
+;; 	 (col2 (color-values col-end))
+;; 	 (col
+;; 	  (mapcar (lambda (c)
+;; 		    (round
+;; 		     (+ (* (- 1 percent) (nth c col1))
+;; 			(* percent (nth c col2)))))
+;; 		  '(0 1 2))))
+;;     (format "RGB:%04x/%04x/%04x"
+;; 	    (car col)
+;; 	    (nth 1 col)
+;; 	    (nth 2 col))))
+
+
+;;; Utilities
+
+(defsubst esup-propertize-string (str &rest properties)
+  "Replace all properties of STR with PROPERTIES."
+  (set-text-properties 0 (length str) properties str)
+  str)
+
+(defsubst esup-fontify-string (str face)
+  "Modify STR's font-lock-face property to FACE and return STR."
+  (esup-propertize-string str 'font-lock-face face))
+
+(defun esup-chomp (str)
+  "Chomp leading and tailing whitespace from STR."
+  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
+                       str)
+    (setq str (replace-match "" t t str)))
+  str)
+
+;; (defun esup-make-benchstr (timings)
+;;   "Create descriptive benchmark string from TIMINGS."
+;;   (format
+;;    (concat
+;;     "<Percentage: %d ; "
+;;     "Time: %.2f ; "
+;;     "Number of GC: %d ; "
+;;     "Time for GC: %.2f>\n")
+;;    percentage
+;;    (car timings) (nth 1 timings) (nth 2 timings)))
+
+
+;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
+;; support.
+;;
+;; Local Variables:
+;; lexical-binding: t
+;; End:
+
+(provide 'esup)
 
 ;; esup.el ends here
