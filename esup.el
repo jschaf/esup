@@ -131,6 +131,11 @@ grayed out.")
                 :type number
                 :accessor get-start-point
                 :documentation "The start position of the benchmarked expression.")
+   (expression-string :initarg :expression-string
+                      :initform ""
+                      :type string
+                      :accessor get-expression-string
+                      :documentation "The string representation of the benchmarked expression.")
    (end-point :initarg :end-point
               :initform 0
               :type number
