@@ -275,20 +275,19 @@ Commands:
 
   (view-mode)
 
-  (set (make-local-variable 'word-wrap) t)
   (set (make-local-variable 'view-no-disable-on-exit) t)
-  ;; With Emacs 22 `view-exit-action' could delete the selected window
-  ;; disregarding whether the help buffer was shown in that window at
-  ;; all.  Since `view-exit-action' is called with the help buffer as
-  ;; argument it seems more appropriate to have it work on the buffer
-  ;; only and leave it to `view-mode-exit' to delete any associated
-  ;; window(s).
-  (setq view-exit-action
-	(lambda (buffer)
-	  ;; Use `with-current-buffer' to make sure that `bury-buffer'
-	  ;; also removes BUFFER from the selected window.
-	  (with-current-buffer buffer
-	    (bury-buffer))))
+  ;; ;; With Emacs 22 `view-exit-action' could delete the selected window
+  ;; ;; disregarding whether the help buffer was shown in that window at
+  ;; ;; all.  Since `view-exit-action' is called with the help buffer as
+  ;; ;; argument it seems more appropriate to have it work on the buffer
+  ;; ;; only and leave it to `view-mode-exit' to delete any associated
+  ;; ;; window(s).
+  ;; (setq view-exit-action
+  ;;       (lambda (buffer)
+  ;;         ;; Use `with-current-buffer' to make sure that `bury-buffer'
+  ;;         ;; also removes BUFFER from the selected window.
+  ;;         (with-current-buffer buffer
+  ;;           (bury-buffer))))
 
   ;; (set (make-local-variable 'revert-buffer-function)
   ;;      'help-mode-revert-buffer)
