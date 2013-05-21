@@ -409,61 +409,6 @@ Commands:
       (kill-buffer (current-buffer)))
     results))
 
-
-
-;; (defun esup-show-results (results)
-;;   "Show timings from RESULTS in current buffer."
-;;   (let ((totaltime (esup-totaltime results))
-;; 	current percentage ov)
-;;     (while results
-;;       (let* ((current (pop results))
-;; 	     (ov (make-overlay (car current) (cadr current)))
-;; 	     (current (car (last current)))
-;; 	     (percentage (/ (+ (car current) (nth 2 current))
-;; 			    totaltime))
-;; 	     col benchstr lowface)
-;; 	(setq col
-;; 	      (esup-percentage-color
-;; 	       percentage
-;; 	       (if (color-defined-p (face-background 'default))
-;; 		   (face-background 'default)
-;; 		   "black")
-;; 	       (face-background 'esup-time-face)))
-;; 	(setq percentage (round (* 100 percentage)))
-;; 	(setq benchstr (esup-make-benchstr current))
-;; 	(overlay-put ov 'help-echo benchstr)
-;; 	(if (and (numberp esup-low-percentage)
-;; 		 (< percentage esup-low-percentage))
-;; 	    (overlay-put ov 'face 'esup-low-percentage-face)
-;; 	  (overlay-put ov 'before-string
-;; 		       (propertize benchstr
-;; 				   'face 'esup-highlight-face))
-;; 	  (overlay-put ov 'face
-;; 		       `(:background ,col)))))
-;;     (setq ov (make-overlay (1- (point-max)) (point-max)))
-;;     (overlay-put ov 'after-string
-;; 		 (propertize
-;; 		  (format "\n-----------------\nTotal time: %.2fs\n"
-;; 			  totaltime)
-;; 		  'face 'esup-highlight-face))))
-
-
-
-;; (defun esup-percentage-color (percent col-begin col-end)
-;;   "Calculate color according to PERCENT between COL-BEGIN and COL-END."
-;;   (let* ((col1 (color-values col-begin))
-;; 	 (col2 (color-values col-end))
-;; 	 (col
-;; 	  (mapcar (lambda (c)
-;; 		    (round
-;; 		     (+ (* (- 1 percent) (nth c col1))
-;; 			(* percent (nth c col2)))))
-;; 		  '(0 1 2))))
-;;     (format "RGB:%04x/%04x/%04x"
-;; 	    (car col)
-;; 	    (nth 1 col)
-;; 	    (nth 2 col))))
-
 
 ;;; Utilities
 
