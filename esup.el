@@ -370,7 +370,8 @@ Commands:
 
 (defmethod render ((obj esup-result))
   "Render fields with ESUP-RESULT and return the string."
-  (with-slots (file start-point end-point exec-time percentage)
+  (with-slots (file expression-string start-point end-point exec-time 
+               percentage)
       obj
     (let* ((short-file (file-name-nondirectory file)))
       (esup-propertize-string
@@ -389,7 +390,10 @@ Commands:
        (format "%.3fsec" exec-time)
        "   "
        (format "%d%%" percentage)
-       "\n"))))
+       "\n"
+       expression-string
+       "\n"
+       ))))
 
 (defun esup-massage-results (results)
   "Remove inconsequential entries and sort RESULTS."
