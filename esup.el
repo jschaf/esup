@@ -204,19 +204,15 @@ grayed out.")
         (setq start (point)))
       results)))
 
-(defun esup-result-from-benchmark (file start end benchmark)
-  "Return class `esup-result' from FILE, START, END and BENCHMARK."
-  (esup-result "esup-result"
-               :file file :start-point start :end-point end :exec-time (nth 0 benchmark)
-               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark)))
-
 (defun esup-profile-sexp (start end)
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
-  (let* ((sexp (car (read-from-string
-                     (buffer-substring-no-properties start end))))
+  (let* ((sexp-string (buffer-substring start end))
+         (sexp (car (read-from-string
+                     sexp-string)))
+         (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
-         load-file-name)
+        load-file-name)
     (if (looking-at "(load ")
         (progn
           (goto-char (match-end 0))
@@ -227,7 +223,12 @@ Returns a list of class `esup-result'."
       ;; Have this function always return a list of `esup-result' to
       ;; simplify processing because a loaded file will return a list
       ;; of results.
-      (list (esup-result-from-benchmark file-name start end (benchmark-run (eval sexp)))))))
+      (list (esup-result "esup-result"
+               :file file-name
+               :expression-string sexp-string
+               :start-point start :end-point end
+               :exec-time (nth 0 benchmark)
+               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark))))))
 
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
