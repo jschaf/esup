@@ -365,6 +365,7 @@ Commands:
       (esup-update-percentages results)
       (loop for result in results
             do (insert (render result) "\n"))
+      (goto-char (point-min))
       (pop-to-buffer (current-buffer)))))
 
 (defmethod render ((obj esup-result))
