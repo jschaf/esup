@@ -68,35 +68,47 @@
                                  "~/.emacs.d/init.el")
   "Possible user init files to be profiled.")
 
+(defcustom esup-run-as-batch-p nil
+  "If non-nil, run the profiled Emacs as batch.
+This is off by default because batch runs faster than regular
+Emacs, so it's not as realistic.")
+
 (defcustom esup-results-file "~/.esup-results.el"
   "Where to save the results of profiling.")
 
 (defcustom esup-insignificant-time 0.02
   "Only show expressions that take longer than this time.")
 
+(defface esup-timing-information
+  '((t :inherit font-lock-type-face))
+  "Face for displaying timing information.
+Includes execution time, gc time and number of gc pauses."
+  :group 'esup
+  :version "24.3")
+
 (defface esup-line-number
   '((t :inherit font-lock-keyword-face))
   "Face for displaying line numbers in the *esup* buffer."
   :group 'esup
-  :version "22.1")
+  :version "24.3")
 
 (defface esup-column-number
   '((t :inherit font-lock-doc-face))
   "Face for displaying column numbers in the *esup* buffer."
   :group 'esup
-  :version "22.1")
+  :version "24.3")
 
 (defface esup-file
   '((t :inherit font-lock-function-name-face))
   "Face for displaying the file name in the *esup* buffer."
   :group 'esup
-  :version "22.1")
+  :version "24.3")
 
 (defvar esup-process nil
   "The current esup process.")
 
 
-;;; Model - all the data
+;;; Model - functions for collecting and manipulating data.
 
 ;; TODO: Fix or ignore the followin byte-compilation error
 ;; Unused lexical variable `scoped-class'
