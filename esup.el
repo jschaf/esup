@@ -71,10 +71,8 @@
 (defcustom esup-results-file "~/.esup-results.el"
   "Where to save the results of profiling.")
 
-(defcustom esup-low-percentage 3
-  "Percentage which should be considered low.
-All sexp's with a running time below this percentage will be
-grayed out.")
+(defcustom esup-insignificant-time 0.02
+  "Only show expressions that take longer than this time.")
 
 (defface esup-line-number
   '((t :inherit font-lock-keyword-face))
@@ -374,10 +372,17 @@ Commands:
        "\n"
        ))))
 
-(defun esup-massage-results (results)
-  "Remove inconsequential entries and sort RESULTS."
-    ;; (cl-delete-if (lambda (a) (< a 0.01)) results :key 'get-exec-time)
-    (cl-sort results '> :key 'get-exec-time))
+(defun esup-fontify-results (results)
+  "Add Emacs-Lisp font-lock to each expression in RESULTS."
+  (with-temp-buffer
+    (emacs-lisp-mode)
+    (loop for result in results
+          do
+          (erase-buffer)
+          (insert (get-expression-string result))
+          (font-lock-fontify-buffer)
+          (oset result :expression-string (buffer-string)))
+    results))
 
 (defun esup-read-results ()
   "Read results from `esup-results-file' and return the list."
