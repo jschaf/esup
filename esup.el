@@ -295,14 +295,12 @@ Commands:
   "Profile the startup time of Emacs in the background."
   (interactive)
   (with-current-buffer (get-buffer-create "*esup-log*")
-    (erase-buffer)
-    (switch-to-buffer-other-window (current-buffer)))
+    (erase-buffer))
   ;; TODO: use full path to emacs
   (setq esup-process
         (start-process "*esup*" "*esup-log*"
                        "emacs"
                        "-q"
-                       "--debug-init"
                        "--batch"
                        "-l" "~/.emacs.d/el-get/esup/esup.el"
                        "-f" "esup-batch"))
