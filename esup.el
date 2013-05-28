@@ -213,21 +213,36 @@ Returns a list of class `esup-result'."
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (loop for result in results
-        sum (get-exec-time result) into total-time
-        finally return total-time))
+        sum (get-exec-time result) into total-exec-time
+        finally return total-exec-time))
+
+(defun esup-total-gc-number (results)
+  "Calculate the total number of GC pauses of RESULTS."
+  (loop for result in results
+        sum (get-gc-number result) into total-gc-number
+        finally return total-gc-number))
+
+(defun esup-total-gc-time (results)
+  "Calculate the total time spent in GC of RESULTS."
+  (loop for result in results
+        sum (get-gc-time result) into total-gc-time
+        finally return total-gc-time))
+
+(defun esup-drop-insignificant-times (results)
+  "Remove inconsequential entries and sort RESULTS."
+    (cl-delete-if (lambda (a) (< a esup-insignificant-time)) results :key 'get-exec-time)
+    (cl-sort results '> :key 'get-exec-time))
 
 (defun esup-update-percentages (results)
   "Add the percentage of exec-time to each item in RESULTS."
-  ;; (dolist (result results)
-  ;;   (oset result :percentage 2)
-  ;;   )
   (loop for result in results
         with total-time = (esup-total-exec-time results)
         do
         (oset result :percentage (* 100 (/ (get-exec-time result)
                                            total-time)))))
-
 
+
+;;; Major mode setup
 (defvar esup-mode-map
   (let ((map (make-sparse-keymap)))
     (set-keymap-parent map button-buffer-map)
@@ -335,19 +350,39 @@ Commands:
 (defun esup-display-results ()
   "Display the results of the benchmarking."
   (interactive)
-  (let ((results (esup-massage-results (esup-read-results)))
-        (inhibit-read-only t))
+  (let* ((results (esup-fontify-results
+                   (esup-drop-insignificant-times
+                    (esup-read-results))))
+         ;; Needed since the buffer is in `view-mode'.
+         (inhibit-read-only t))
     (with-current-buffer (esup-buffer)
       (erase-buffer)
       (esup-update-percentages results)
+      (insert (esup-render-summary results))
       (loop for result in results
             do (insert (render result) "\n"))
+      ;; We want the user to be at the top because it's disoreinting
+      ;; to start at the bottom.
       (goto-char (point-min))
       (pop-to-buffer (current-buffer)))))
 
+(defun esup-render-summary (results)
+  "Return a summary string for RESULTS"
+  (let ((total-exec-time (esup-total-exec-time results))
+        (total-gc-number (esup-total-gc-number results))
+        (total-gc-time (esup-total-gc-time results)))
+    (concat
+     "Total User Startup Time: "
+     (format "%.3fsec     " total-exec-time)
+     "Total Number of GC Pauses: "
+     (format "%d     " total-gc-number)
+     "Total GC Time: "
+     (format "%.3fsec" total-gc-time)
+     "\n\n")))
+
 (defmethod render ((obj esup-result))
   "Render fields with ESUP-RESULT and return the string."
-  (with-slots (file expression-string start-point end-point exec-time 
+  (with-slots (file expression-string start-point end-point exec-time
                percentage)
       obj
     (let* ((short-file (file-name-nondirectory file)))
