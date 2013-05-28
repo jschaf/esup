@@ -389,11 +389,14 @@ Commands:
         (total-gc-time (esup-total-gc-time results)))
     (concat
      "Total User Startup Time: "
-     (format "%.3fsec     " total-exec-time)
+     (esup-fontify-string (format "%.3fsec     " total-exec-time)
+                          'esup-timing-information)
      "Total Number of GC Pauses: "
-     (format "%d     " total-gc-number)
+     (esup-fontify-string (format "%d     " total-gc-number)
+                          'esup-timing-information)
      "Total GC Time: "
-     (format "%.3fsec" total-gc-time)
+     (esup-fontify-string (format "%.3fsec" total-gc-time)
+                          'esup-timing-information)
      "\n\n")))
 
 (defmethod render ((obj esup-result))
@@ -413,11 +416,13 @@ Commands:
 
       (concat
        short-file
-
+       ;; TODO:  Add line number here
        ":n  "
-       (format "%.3fsec" exec-time)
+       (esup-fontify-string (format "%.3fsec" exec-time)
+                            'esup-timing-information)
        "   "
-       (format "%d%%" percentage)
+       (esup-fontify-string (format "%d%%" percentage)
+                            'esup-timing-information)
        "\n"
        expression-string
        "\n"
