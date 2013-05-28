@@ -152,9 +152,8 @@
 
     (setq abs-file-path
           (locate-file clean-file load-path
-                       ;; Add empty string in case the user has
-                       ;; file.el, otherwise we look for
-                       ;; file.el.el
+                       ;; Add empty string in case the user has (load
+                       ;; "file.el"), otherwise we'll look for file.el.el
                        (cons "" load-suffixes)))
 
     (esup-profile-buffer (find-file-noselect abs-file-path))))
