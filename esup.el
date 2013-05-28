@@ -193,6 +193,7 @@ Returns a list of class `esup-result'."
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
         load-file-name)
+    ;; Recursively profile loaded files.
     (if (looking-at "(load ")
         (progn
           (goto-char (match-end 0))
