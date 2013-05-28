@@ -468,17 +468,6 @@ Commands:
     (setq str (replace-match "" t t str)))
   str)
 
-;; (defun esup-make-benchstr (timings)
-;;   "Create descriptive benchmark string from TIMINGS."
-;;   (format
-;;    (concat
-;;     "<Percentage: %d ; "
-;;     "Time: %.2f ; "
-;;     "Number of GC: %d ; "
-;;     "Time for GC: %.2f>\n")
-;;    percentage
-;;    (car timings) (nth 1 timings) (nth 2 timings)))
-
 
 ;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
 ;; support.
