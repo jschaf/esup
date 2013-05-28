@@ -95,8 +95,11 @@
 (defvar esup-process nil
   "The current esup process.")
 
+
 ;;; Model - all the data
 
+;; TODO: Fix or ignore the followin byte-compilation error
+;; Unused lexical variable `scoped-class'
 (defclass esup-result ()
   ((file :initarg :file
          :initform ""
