@@ -324,14 +324,17 @@ Commands:
 (defun esup ()
   "Profile the startup time of Emacs in the background."
   (interactive)
+  (message "Starting esup...")
   (with-current-buffer (get-buffer-create "*esup-log*")
     (erase-buffer))
-  ;; TODO: use full path to emacs
   (setq esup-process
         (start-process "*esup*" "*esup-log*"
+                       ;; TODO: use full path to emacs
                        "emacs"
-                       "-q"
-                       "--batch"
+                       ;; The option -q is combined with --batch
+                       ;; because this function errors if we pass an
+                       ;; empty string or nil
+                       (if esup-run-as-batch-p "-q --batch" "-q")
                        "-l" "~/.emacs.d/el-get/esup/esup.el"
                        "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
