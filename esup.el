@@ -42,26 +42,6 @@
 ;; script-like Emacs Lisp file, for that matter).
 
 ;; It will go over all sexp's (balanced expressions) in the file and
-;; run them through `benchmark-run'.  It will then show the file with
-;; overlays applied in a way that let you easily find out which sexp's
-;; take the most time.  Since time is relative, it's not the absolute
-;; value that counts but the percentage of the total running time.
-;;
-;; * All other sexp's with a percentage greater than
-;;   `profile-dotemacs-low-percentage' will be preceded by a
-;;   highlighted line, showing the results from `benchmark-run'.
-;;   Also, the more 'reddish' the background of the sexp, the more
-;;   time it needs.
-
-;; * All other sexp's will be grayed out to indicate that their
-;;   running time is miniscule.  You can still see the benchmark
-;;   results in the minibuffer by hovering over the sexp with the
-;;   mouse.
-
-;; You can only benchmark full sexp's, so if you wrapped large parts
-;; of your init file in some conditional clause, you'll have to remove
-;; that for getting finer granularity.
-
 
 (require 'benchmark)
 (require 'eieio)
