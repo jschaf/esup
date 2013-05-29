@@ -82,7 +82,7 @@ Includes execution time, gc time and number of gc pauses."
   :version "24.3")
 
 (defface esup-line-number
-  '((t :inherit font-lock-keyword-face))
+  '((t :inherit font-lock-constant-face))
   "Face for displaying line numbers in the *esup* buffer."
   :group 'esup
   :version "24.3")
