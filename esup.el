@@ -58,11 +58,6 @@
   :prefix "esup-"
   :group 'languages)
 
-(defcustom esup-mode-hook nil
-  "Hook to run when starting esup mode."
-  :type 'hook
-  :group 'esup)
-
 (defcustom esup-user-init-files '("~/.emacs"
                                  "~/.emacs.el"
                                  "~/.emacs.d/init.el")
@@ -255,52 +250,64 @@ Returns a list of class `esup-result'."
                                            total-time)))))
 
 
-;;; Major mode setup
-(defvar esup-mode-map
-  (let ((map (make-sparse-keymap)))
-    (set-keymap-parent map button-buffer-map)
-
-    ;; (define-key map [mouse-2] 'esup-follow-mouse)
-    ;; (define-key map "\C-c\C-b" 'esup-go-back)
-    ;; (define-key map "\C-c\C-f" 'esup-go-forward)
-    ;; (define-key map "\C-c\C-c" 'esup-follow-symbol)
-    ;; ;; Documentation only, since we use minor-mode-overriding-map-alist.
-    ;; (define-key map "\r" 'esup-follow)
-    map)
-  "Keymap for `esup-mode'.")
-
 ;;; Controller - the entry points
-(defun esup-mode ()
-  "Major mode for controlling the *esup* buffer.
 
-Commands:
-\\{esup-mode-map}"
-  (interactive)
-  (kill-all-local-variables)
-  (use-local-map esup-mode-map)
-  (setq mode-name "esup")
-  (setq major-mode 'esup-mode)
+(defun esup-visit-item ()
+  "Visit current item."
+  (interactive "p")
+  (message "Visiting file"))
 
-  (view-mode)
+(define-derived-mode esup-mode
+  special-mode "esup"
+  (font-lock-mode 1))
 
-  (set (make-local-variable 'view-no-disable-on-exit) t)
-  ;; ;; With Emacs 22 `view-exit-action' could delete the selected window
-  ;; ;; disregarding whether the help buffer was shown in that window at
-  ;; ;; all.  Since `view-exit-action' is called with the help buffer as
-  ;; ;; argument it seems more appropriate to have it work on the buffer
-  ;; ;; only and leave it to `view-mode-exit' to delete any associated
-  ;; ;; window(s).
-  ;; (setq view-exit-action
-  ;;       (lambda (buffer)
-  ;;         ;; Use `with-current-buffer' to make sure that `bury-buffer'
-  ;;         ;; also removes BUFFER from the selected window.
-  ;;         (with-current-buffer buffer
-  ;;           (bury-buffer))))
+(define-key esup-mode-map (kbd "<return>") 'esup-visit-item)
+(define-key esup-mode-map "y" 'esup-visit-item)
+(define-key esup-mode-map "n" 'esup-next-result)
+(define-key esup-mode-map "p" 'esup-previous-result)
 
-  ;; (set (make-local-variable 'revert-buffer-function)
-  ;;      'help-mode-revert-buffer)
+(defun esup-next-result (&optional arg)
+  "Move down the next ARG results."
+  (interactive "p")
+  (setq arg (or arg 1))
+  ;; Get off the result-break because the movements will be off by one
+  ;; character.
+  (when (get-text-property (point) 'result-break)
+    (backward-char))
+  (let ((next-point (point)))
+    (while (> arg 0)
+      (setq next-point (next-single-property-change next-point 'result-break))
+      (if next-point
+          (progn
+            (setq arg (1- arg))
+            (setq next-point (1+ next-point)))
+        (setq arg 0)
+        (setq next-point (point-max))))
+    (goto-char next-point)))
 
-  (run-mode-hooks 'esup-mode-hook))
+(defun esup-previous-result (&optional arg)
+  "Move up the previous ARG results."
+  (interactive "p")
+  ;; Add one to arg because we have to go up 2 results then down one
+  ;; character to be at the start of a new result.
+  (setq arg (+ 2 (or arg 1)))
+  ;; Get off the result-break because the movements will be off by one
+  ;; character.
+  (when (get-text-property (point) 'result-break)
+    (forward-char))
+  (let ((prev-point (point)))
+    (while (> arg 0)
+      (setq prev-point (previous-single-property-change prev-point
+                                                        'result-break))
+      (if prev-point
+          (setq arg (1- arg))
+        ;; break out of the loop because we couldn't find a previous
+        ;; text-property of result-break, so we're at the beginning.
+        (setq arg 0)
+        (setq prev-point (point-min))))
+    (goto-char prev-point)
+    (when (get-text-property (point) 'result-break)
+      (forward-char))))
 
 (defun esup-batch ()
   "Function for the profiled Emacs to run."
