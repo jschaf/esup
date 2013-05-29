@@ -385,18 +385,20 @@ Returns a list of class `esup-result'."
   (let* ((results (esup-fontify-results
                    (esup-drop-insignificant-times
                     (esup-read-results))))
+         (result-break (esup-propertize-string "\n" 'result-break t))
          ;; Needed since the buffer is in `view-mode'.
          (inhibit-read-only t))
     (with-current-buffer (esup-buffer)
       (erase-buffer)
       (esup-update-percentages results)
-      (insert (esup-render-summary results))
+      (insert (esup-render-summary results) result-break)
       (loop for result in results
-            do (insert (render result) "\n"))
+            do (insert (render result) result-break))
       ;; We want the user to be at the top because it's disoreinting
       ;; to start at the bottom.
       (goto-char (point-min))
-      (pop-to-buffer (current-buffer)))))
+      (pop-to-buffer (current-buffer))))
+  (message "esup finished"))
 
 (defun esup-render-summary (results)
   "Return a summary string for RESULTS"
