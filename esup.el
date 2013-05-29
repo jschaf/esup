@@ -263,8 +263,14 @@ Returns a list of class `esup-result'."
 
 (defun esup-visit-item ()
   "Visit current item."
-  (interactive "p")
-  (message "Visiting file"))
+  (interactive)
+  (let ((file (get-text-property (point) 'full-file))
+        (start-point (get-text-property (point) 'start-point)))
+    (if file
+        (progn
+          (find-file-other-window file)
+          (goto-char start-point))
+      (message "Not at a file."))))
 
 (define-derived-mode esup-mode
   special-mode "esup"
