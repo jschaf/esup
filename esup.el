@@ -170,7 +170,9 @@ Includes execution time, gc time and number of gc pauses."
                        ;; Add empty string in case the user has (load
                        ;; "file.el"), otherwise we'll look for file.el.el
                        (cons "" load-suffixes)))
-
+    ;; TODO: A file with no sexps (either nothing or comments) will
+    ;; cause an error.
+    (message "esup: loading %s" abs-file-path)
     (esup-profile-buffer (find-file-noselect abs-file-path))))
 
 (defun esup-profile-buffer (buffer)
