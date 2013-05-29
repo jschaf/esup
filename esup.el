@@ -57,6 +57,7 @@
   :prefix "esup-"
   :group 'languages)
 
+;; TODO: find out how emacs actually loads the files.
 (defcustom esup-user-init-files '("~/.emacs"
                                  "~/.emacs.el"
                                  "~/.emacs.d/init.el")
