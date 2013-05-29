@@ -33,15 +33,14 @@
 ;;
 ;; M-x `esup' to profile your Emacs startup and display the results.
 
-
 ;;; Commentary:
 ;;
 ;; The most recent code is always at http://github.com/jschaf/esup
 ;;
-;; This is to easily profile your Emacs init file (or any other
-;; script-like Emacs Lisp file, for that matter).
-
-;; It will go over all sexp's (balanced expressions) in the file and
+;; esup profiles your emacs startup time by examining all top-level
+;; S-expressions (sexps).  esup starts a new Emacs process from Emacs
+;; to profile each SEXP.  After the profiled Emacs is complete, it
+;; will exit and your Emacs will display the results.
 
 (require 'benchmark)
 (require 'eieio)
