@@ -119,6 +119,11 @@ Includes execution time, gc time and number of gc pauses."
                 :type number
                 :accessor get-start-point
                 :documentation "The start position of the benchmarked expression.")
+   (line-number :initarg :line-number
+                :initform 0
+                :type number
+                :accessor get-line-number
+                :documentation "The beginning line number of the expression.")
    (expression-string :initarg :expression-string
                       :initform ""
                       :type string
@@ -197,6 +202,7 @@ Returns a list of class `esup-result'."
   (let* ((sexp-string (buffer-substring start end))
          (sexp (car (read-from-string
                      sexp-string)))
+         (line-number (line-number-at-pos start))
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
         load-file-name)
@@ -215,6 +221,7 @@ Returns a list of class `esup-result'."
                :file file-name
                :expression-string sexp-string
                :start-point start :end-point end
+               :line-number line-number
                :exec-time (nth 0 benchmark)
                :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark))))))
 
@@ -404,12 +411,12 @@ Returns a list of class `esup-result'."
      "Total GC Time: "
      (esup-fontify-string (format "%.3fsec" total-gc-time)
                           'esup-timing-information)
-     "\n\n")))
+     "\n")))
 
 (defmethod render ((obj esup-result))
   "Render fields with ESUP-RESULT and return the string."
-  (with-slots (file expression-string start-point end-point exec-time
-               percentage)
+  (with-slots (file expression-string start-point end-point line-number
+                    exec-time percentage)
       obj
     (let* ((short-file (file-name-nondirectory file)))
       (esup-propertize-string
@@ -424,7 +431,8 @@ Returns a list of class `esup-result'."
       (concat
        short-file
        ;; TODO:  Add line number here
-       ":n  "
+       (esup-fontify-string (format ":%d  " line-number)
+                            'esup-line-number)
        (esup-fontify-string (format "%.3fsec" exec-time)
                             'esup-timing-information)
        "   "
@@ -432,8 +440,7 @@ Returns a list of class `esup-result'."
                             'esup-timing-information)
        "\n"
        expression-string
-       "\n"
-       ))))
+       "\n"))))
 
 (defun esup-fontify-results (results)
   "Add Emacs-Lisp font-lock to each expression in RESULTS."
