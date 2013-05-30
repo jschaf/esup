@@ -57,8 +57,7 @@ Download `esup.el` and place the download directory on your
 Usage
 =====
 
-Make sure the Emacs executable is on your PATH. Auto-load the starting
-function `esup`.
+Auto-load the starting function `esup`.
     
 ```lisp
 (autoload 'esup "esup" "Emacs Start Up Profiler." nil)

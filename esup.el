@@ -103,6 +103,9 @@ Includes execution time, gc time and number of gc pauses."
 (defvar esup-process nil
   "The current esup process.")
 
+(defvar esup-emacs-path (concat invocation-directory invocation-name)
+  "Path to the emacs binary used for profiling.")
+
 
 ;;; Model - functions for collecting and manipulating data.
 
@@ -352,8 +355,7 @@ Returns a list of class `esup-result'."
     (erase-buffer))
   (setq esup-process
         (start-process "*esup*" "*esup-log*"
-                       ;; TODO: use full path to emacs
-                       "emacs"
+                       esup-emacs-path
                        ;; The option -q is combined with --batch
                        ;; because this function errors if we pass an
                        ;; empty string or nil
