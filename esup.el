@@ -338,12 +338,13 @@ Returns a list of class `esup-result'."
   (let ((init-file (car (cl-remove-if-not #'file-exists-p
                                           esup-user-init-files)))
         results)
-    (add-to-list 'load-path (file-name-directory init-file))
-    (setq results (esup-profile-file init-file))
-    (find-file esup-results-file)
-    (erase-buffer)
-    (prin1 results (current-buffer))
-    (basic-save-buffer)
+    (ignore-errors
+      (add-to-list 'load-path (file-name-directory init-file))
+      (setq results (esup-profile-file init-file))
+      (find-file esup-results-file)
+      (erase-buffer)
+      (prin1 results (current-buffer))
+      (basic-save-buffer))
     (kill-emacs)))
 
 (defun esup-process-sentinel (process status)
