@@ -335,6 +335,7 @@ Returns a list of class `esup-result'."
 
 (defun esup-batch ()
   "Function for the profiled Emacs to run."
+  (require 'cl)
   (let ((init-file (car (cl-remove-if-not #'file-exists-p
                                           esup-user-init-files)))
         results)
