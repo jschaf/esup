@@ -64,4 +64,4 @@ function `esup`.
 (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ```
 
-To start Esup, run <kbd>M-x esup<kbd>, and watch the magic happen.
+To start Esup, run <kbd>M-x esup</kbd>, and watch the magic happen.
