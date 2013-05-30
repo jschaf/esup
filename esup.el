@@ -106,6 +106,11 @@ Includes execution time, gc time and number of gc pauses."
 (defvar esup-emacs-path (concat invocation-directory invocation-name)
   "Path to the emacs binary used for profiling.")
 
+(defvar esup-esup-path
+  (or (and load-in-progress
+	   load-file-name)
+      (find-library-name "esup"))
+  "Full path to esup.el")
 
 ;;; Model - functions for collecting and manipulating data.
 
@@ -360,8 +365,7 @@ Returns a list of class `esup-result'."
                        ;; because this function errors if we pass an
                        ;; empty string or nil
                        (if esup-run-as-batch-p "-q --batch" "-q")
-                       "-l" "~/.emacs.d/el-get/esup/esup.el"
-                       "-f" "esup-batch"))
+                       "-l" esup-esup-path "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
 
 (defun esup-follow-link (pos)
