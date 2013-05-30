@@ -361,16 +361,6 @@ Returns a list of class `esup-result'."
                        "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
 
-(defun esup-buffer ()
-  "Initialize and return the *esup* buffer."
-  (let ((buf (get-buffer esup-display-buffer)))
-    (if buf
-        buf
-      (setq buf (generate-new-buffer esup-display-buffer))
-      (with-current-buffer buf
-        (esup-mode)))
-    buf))
-
 (defun esup-follow-link (pos)
   "Follow the link that was clicked at point POS."
   (let ((file (get-text-property pos 'full-file))
@@ -380,10 +370,39 @@ Returns a list of class `esup-result'."
     (goto-char start-point)))
 
 
+;;; Utilities
+
+(defsubst esup-propertize-string (str &rest properties)
+  "Replace all properties of STR with PROPERTIES."
+  (set-text-properties 0 (length str) properties str)
+  str)
+
+(defsubst esup-fontify-string (str face)
+  "Modify STR's font-lock-face property to FACE and return STR."
+  (esup-propertize-string str 'font-lock-face face))
+
+(defun esup-chomp (str)
+  "Chomp leading and tailing whitespace from STR."
+  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
+                       str)
+    (setq str (replace-match "" t t str)))
+  str)
+
+
 ;;; View - rendering functions
 
 (defvar esup-display-buffer "*esup*"
   "The buffer in which to display benchmark results.")
+
+(defun esup-buffer ()
+  "Initialize and return the *esup* buffer."
+  (let ((buf (get-buffer esup-display-buffer)))
+    (if buf
+        buf
+      (setq buf (generate-new-buffer esup-display-buffer))
+      (with-current-buffer buf
+        (esup-mode)))
+    buf))
 
 (defun esup-display-results ()
   "Display the results of the benchmarking."
@@ -472,25 +491,6 @@ Returns a list of class `esup-result'."
       (setq results (read (current-buffer)))
       (kill-buffer (current-buffer)))
     results))
-
-
-;;; Utilities
-
-(defsubst esup-propertize-string (str &rest properties)
-  "Replace all properties of STR with PROPERTIES."
-  (set-text-properties 0 (length str) properties str)
-  str)
-
-(defsubst esup-fontify-string (str face)
-  "Modify STR's font-lock-face property to FACE and return STR."
-  (esup-propertize-string str 'font-lock-face face))
-
-(defun esup-chomp (str)
-  "Chomp leading and tailing whitespace from STR."
-  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
-                       str)
-    (setq str (replace-match "" t t str)))
-  str)
 
 
 ;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
