@@ -103,6 +103,14 @@ Includes execution time, gc time and number of gc pauses."
 (defvar esup-process nil
   "The current esup process.")
 
+(defvar esup-emacs-path (concat invocation-directory invocation-name)
+  "Path to the emacs binary used for profiling.")
+
+(defvar esup-esup-path
+  (or (and load-in-progress
+	   load-file-name)
+      (find-library-name "esup"))
+  "Full path to esup.el")
 
 ;;; Model - functions for collecting and manipulating data.
 
@@ -327,15 +335,17 @@ Returns a list of class `esup-result'."
 
 (defun esup-batch ()
   "Function for the profiled Emacs to run."
+  (require 'cl)
   (let ((init-file (car (cl-remove-if-not #'file-exists-p
                                           esup-user-init-files)))
         results)
-    (add-to-list 'load-path (file-name-directory init-file))
-    (setq results (esup-profile-file init-file))
-    (find-file esup-results-file)
-    (erase-buffer)
-    (prin1 results (current-buffer))
-    (basic-save-buffer)
+    (ignore-errors
+      (add-to-list 'load-path (file-name-directory init-file))
+      (setq results (esup-profile-file init-file))
+      (find-file esup-results-file)
+      (erase-buffer)
+      (prin1 results (current-buffer))
+      (basic-save-buffer))
     (kill-emacs)))
 
 (defun esup-process-sentinel (process status)
@@ -352,14 +362,12 @@ Returns a list of class `esup-result'."
     (erase-buffer))
   (setq esup-process
         (start-process "*esup*" "*esup-log*"
-                       ;; TODO: use full path to emacs
-                       "emacs"
+                       esup-emacs-path
                        ;; The option -q is combined with --batch
                        ;; because this function errors if we pass an
                        ;; empty string or nil
                        (if esup-run-as-batch-p "-q --batch" "-q")
-                       "-l" "~/.emacs.d/el-get/esup/esup.el"
-                       "-f" "esup-batch"))
+                       "-l" esup-esup-path "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
 
 (defun esup-follow-link (pos)
