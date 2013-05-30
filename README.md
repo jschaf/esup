@@ -3,10 +3,12 @@ ESUP - Emacs Start Up Profiler
 
 Benchmark Emacs Startup time without ever leaving your Emacs.
 
+[!esup screenshot](./esup-screenshot.png "esup screenshot")
+
 Installation
 ============
 
-## With Package (ELPA, MELPA, MARMALADE): ##
+**With Package (ELPA, MELPA, MARMALADE):**
 
 First tell `package.el` to use one of the package repository:
 
@@ -15,7 +17,7 @@ First tell `package.el` to use one of the package repository:
              '("melpa" . "http://melpa.milkbox.net/packages/") t)
 ```
 
-**or**
+*or*
 
 ```lisp
 (add-to-list 'package-archives
@@ -26,11 +28,11 @@ Then install esup:
 
 <kbd>M-x install-package RET esup RET</kbd>
 
-## El-Get ##
+**El-Get**
 
 Use the following recipe with el-get.
 
-```emacs-lisp
+```lisp
 (:name esup
   :website "https://github.com/jschaf/esup"
   :description "Emacs Start Up Profiler"
@@ -43,21 +45,22 @@ Then install esup:
 
 <kbd>M-x el-get-install RET esup RET</kbd>
 
-## Manually ##
+**Manually**
 
 Download `esup.el` and place the download directory on your
 `load-path` like so:
 
-```emacs-lisp
+```lisp
 (add-to-list 'load-path "~/.emacs.d/path/to/esup")
 ```
 
 Usage
 =====
 
-Auto-load the starting function `esup`.
+Make sure the Emacs executable is on your PATH. Auto-load the starting
+function `esup`.
     
-```emacs-lisp
+```lisp
 (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ```
 
