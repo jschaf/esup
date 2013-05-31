@@ -345,7 +345,8 @@ Returns a list of class `esup-result'."
       (find-file esup-results-file)
       (erase-buffer)
       (prin1 results (current-buffer))
-      (basic-save-buffer))
+      (basic-save-buffer)
+      (setq desktop-save-mode nil))
     (kill-emacs)))
 
 (defun esup-process-sentinel (process status)
