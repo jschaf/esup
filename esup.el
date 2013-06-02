@@ -289,7 +289,6 @@ Returns a list of class `esup-result'."
   (font-lock-mode 1))
 
 (define-key esup-mode-map (kbd "<return>") 'esup-visit-item)
-(define-key esup-mode-map "y" 'esup-visit-item)
 (define-key esup-mode-map "n" 'esup-next-result)
 (define-key esup-mode-map "p" 'esup-previous-result)
 
