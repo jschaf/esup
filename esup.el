@@ -61,11 +61,10 @@
 ;; TODO: find out how emacs actually loads the files
 ;; `locate-user-emacs-file' and `user-init-file' look like starting
 ;; points.
-(defcustom esup-user-init-files `(,user-init-file
-                                  "~/.emacs.d/init.el"
+(defcustom esup-user-init-files '("~/.emacs"
                                   "~/.emacs.el"
-                                  "~/.emacs")
-  "Possible user init files to be profiled.")
+                                  "~/.emacs.d/init.el")
+  "Possible user init files to profile.")
 
 (defcustom esup-run-as-batch-p nil
   "If non-nil, run the profiled Emacs as batch.
