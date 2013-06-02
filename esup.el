@@ -38,7 +38,7 @@
 ;;
 ;; The most recent code is always at http://github.com/jschaf/esup
 ;;
-;; esup profiles your emacs startup time by examining all top-level
+;; esup profiles your Emacs startup time by examining all top-level
 ;; S-expressions (sexps).  esup starts a new Emacs process from Emacs
 ;; to profile each SEXP.  After the profiled Emacs is complete, it
 ;; will exit and your Emacs will display the results.
@@ -106,7 +106,7 @@ Includes execution time, gc time and number of gc pauses."
   "The current esup process.")
 
 (defvar esup-emacs-path (concat invocation-directory invocation-name)
-  "Path to the emacs binary used for profiling.")
+  "Path to the Emacs binary used for profiling.")
 
 (defvar esup-esup-path
   (or (and load-in-progress
@@ -116,7 +116,7 @@ Includes execution time, gc time and number of gc pauses."
         (declare-function find-library-name "find-func")
         (require 'find-func)
         (find-library-name "esup")))
-  "Full path to esup.el")
+  "Full path to esup.el.")
 
 
 ;;; Model - functions for collecting and manipulating data.
@@ -380,10 +380,10 @@ Returns a list of class `esup-result'."
                        ;; The option -q is combined with --batch
                        ;; because this `start-process' errors if we
                        ;; pass either an empty string or nil
-                       (if esup-run-as-batch-p 
-                           "-q --batch" 
+                       (if esup-run-as-batch-p
+                           "-q --batch"
                          "-q")
-                       "-l" esup-esup-path 
+                       "-l" esup-esup-path
                        "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
 
@@ -452,7 +452,7 @@ Returns a list of class `esup-result'."
   (message "esup finished"))
 
 (defun esup-render-summary (results)
-  "Return a summary string for RESULTS"
+  "Return a summary string for RESULTS."
   (let ((total-exec-time (esup-total-exec-time results))
         (total-gc-number (esup-total-gc-number results))
         (total-gc-time (esup-total-gc-time results)))
