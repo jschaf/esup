@@ -66,8 +66,10 @@
 
 (defcustom esup-run-as-batch-p nil
   "If non-nil, run the profiled Emacs as batch.
-This is off by default because batch runs faster than regular
-Emacs, so it's not as realistic.")
+This option is off by default because batch runs faster than
+regular Emacs, so the timing information is not as realistic.  If
+you don't want to the benchmarked Emacs frame to appear when
+running `esup', set this to t.")
 
 (defcustom esup-results-file "~/.esup-results.el"
   "Where to save the results of profiling.")
@@ -111,10 +113,11 @@ Includes execution time, gc time and number of gc pauses."
 	   load-file-name)
       (find-library-name "esup"))
   "Full path to esup.el")
+
 
 ;;; Model - functions for collecting and manipulating data.
 
-;; TODO: Fix or ignore the followin byte-compilation error
+;; TODO: Fix or ignore the following byte-compilation error
 ;; Unused lexical variable `scoped-class'
 (defclass esup-result ()
   ((file :initarg :file
@@ -292,12 +295,18 @@ Returns a list of class `esup-result'."
 
 (defun esup-next-result (&optional arg)
   "Move down the next ARG results."
+  ;; This function and its counterpart `esup-previous-result' rely on
+  ;; the text-property `result-break' that we added to the newline
+  ;; between each result.  The text-property is inserted in the
+  ;; function `esup-display-results'.
   (interactive "p")
   (setq arg (or arg 1))
-  ;; Get off the result-break because the movements will be off by one
-  ;; character.
+
+  ;; Move off of the result-break text-property because otherwise the
+  ;; movement will be off by one character.
   (when (get-text-property (point) 'result-break)
     (backward-char))
+
   (let ((next-point (point)))
     (while (> arg 0)
       (setq next-point (next-single-property-change next-point 'result-break))
@@ -326,7 +335,8 @@ Returns a list of class `esup-result'."
       (if prev-point
           (setq arg (1- arg))
         ;; break out of the loop because we couldn't find a previous
-        ;; text-property of result-break, so we're at the beginning.
+        ;; text-property of result-break, so we're at the beginning of
+        ;; the buffer.
         (setq arg 0)
         (setq prev-point (point-min))))
     (goto-char prev-point)
@@ -360,14 +370,18 @@ Returns a list of class `esup-result'."
   (message "Starting esup...")
   (with-current-buffer (get-buffer-create "*esup-log*")
     (erase-buffer))
+  ;; TODO: have the emacs frame run in the background.
   (setq esup-process
         (start-process "*esup*" "*esup-log*"
                        esup-emacs-path
                        ;; The option -q is combined with --batch
-                       ;; because this function errors if we pass an
-                       ;; empty string or nil
-                       (if esup-run-as-batch-p "-q --batch" "-q")
-                       "-l" esup-esup-path "-f" "esup-batch"))
+                       ;; because this `start-process' errors if we
+                       ;; pass either an empty string or nil
+                       (if esup-run-as-batch-p 
+                           "-q --batch" 
+                         "-q")
+                       "-l" esup-esup-path 
+                       "-f" "esup-batch"))
   (set-process-sentinel esup-process 'esup-process-sentinel))
 
 (defun esup-follow-link (pos)
@@ -428,7 +442,7 @@ Returns a list of class `esup-result'."
       (insert (esup-render-summary results) result-break)
       (loop for result in results
             do (insert (render result) result-break))
-      ;; We want the user to be at the top because it's disoreinting
+      ;; We want the user to be at the top because it's disorienting
       ;; to start at the bottom.
       (goto-char (point-min))
       (pop-to-buffer (current-buffer))))
@@ -457,6 +471,7 @@ Returns a list of class `esup-result'."
                     exec-time percentage)
       obj
     (let* ((short-file (file-name-nondirectory file)))
+      ;; TODO: make mouse clicking work on goto file
       (esup-propertize-string
        short-file
        'font-lock-face 'esup-file
@@ -468,7 +483,6 @@ Returns a list of class `esup-result'."
 
       (concat
        short-file
-       ;; TODO:  Add line number here
        (esup-fontify-string (format ":%d  " line-number)
                             'esup-line-number)
        (esup-fontify-string (format "%.3fsec" exec-time)
