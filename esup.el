@@ -111,7 +111,11 @@ Includes execution time, gc time and number of gc pauses."
 (defvar esup-esup-path
   (or (and load-in-progress
 	   load-file-name)
-      (find-library-name "esup"))
+      (progn
+        ;; Prevent byte-compiler from complaining
+        (declare-function find-library-name "find-func")
+        (require 'find-func)
+        (find-library-name "esup")))
   "Full path to esup.el")
 
 
