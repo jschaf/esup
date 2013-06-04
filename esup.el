@@ -123,56 +123,49 @@ Includes execution time, gc time and number of gc pauses."
 
 ;;; Model - functions for collecting and manipulating data.
 
-;; TODO: Fix or ignore the following byte-compilation error
+;; We don't use :accesssor for class slots because it cause a
+;; byte-compiler error even if we use the accessor.  The error text is
+;; below:
+;;
 ;; Unused lexical variable `scoped-class'
 (defclass esup-result ()
   ((file :initarg :file
          :initform ""
          :type string
-         :custom string
-         :accessor get-file-name
          :documentation "The file location for the result.")
    (start-point :initarg :start-point
                 :initform 0
                 :type number
-                :accessor get-start-point
                 :documentation
                 "The start position of the benchmarked expression.")
    (line-number :initarg :line-number
                 :initform 0
                 :type number
-                :accessor get-line-number
                 :documentation "The beginning line number of the expression.")
    (expression-string :initarg :expression-string
                       :initform ""
                       :type string
-                      :accessor get-expression-string
                       :documentation
                       "A string representation of the benchmarked expression.")
    (end-point :initarg :end-point
               :initform 0
               :type number
-              :accessor get-end-point
               :documentation "The end position of the benchmarked expression.")
    (exec-time :initarg :exec-time
               :initform 0
               :type number
-              :accessor get-exec-time
               :documentation)
    (gc-number :initarg :gc-number
               :initform 0
               :type number
-              :accessor get-gc-number
               :documentation "The number of garbage collections that ran.")
    (gc-time :initarg :gc-time
             :initform 0
             :type number
-            :accessor get-gc-time
             :documentation "The time taken by garbage collection.")
    (percentage :initarg :percentage
                :initform 0
                :type number
-               :accessor get-percentage
                :documentation "The percentage of time taken by expression."))
   "A record of benchmarked results.")
 
@@ -250,34 +243,34 @@ Returns a list of class `esup-result'."
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (loop for result in results
-        sum (get-exec-time result) into total-exec-time
+        sum (oref result :exec-time) into total-exec-time
         finally return total-exec-time))
 
 (defun esup-total-gc-number (results)
   "Calculate the total number of GC pauses of RESULTS."
   (loop for result in results
-        sum (get-gc-number result) into total-gc-number
+        sum (oref result :gc-number) into total-gc-number
         finally return total-gc-number))
 
 (defun esup-total-gc-time (results)
   "Calculate the total time spent in GC of RESULTS."
   (loop for result in results
-        sum (get-gc-time result) into total-gc-time
+        sum (oref result :gc-time) into total-gc-time
         finally return total-gc-time))
 
 (defun esup-drop-insignificant-times (results)
   "Remove inconsequential entries and sort RESULTS."
     (cl-delete-if (lambda (a) (< a esup-insignificant-time))
                   results
-                  :key 'get-exec-time)
-    (cl-sort results '> :key 'get-exec-time))
+                  :key #'(lambda (obj) (oref obj :exec-time)))
+    (cl-sort results '> :key #'(lambda (obj) (oref obj :exec-time))))
 
 (defun esup-update-percentages (results)
   "Add the percentage of exec-time to each item in RESULTS."
   (loop for result in results
         with total-time = (esup-total-exec-time results)
         do
-        (oset result :percentage (* 100 (/ (get-exec-time result)
+        (oset result :percentage (* 100 (/ (oref result :exec-time)
                                            total-time)))))
 
 
@@ -510,7 +503,7 @@ Returns a list of class `esup-result'."
     (loop for result in results
           do
           (erase-buffer)
-          (insert (get-expression-string result))
+          (insert (oref result :expression-string))
           (font-lock-fontify-buffer)
           (oset result :expression-string (buffer-string)))
     results))
