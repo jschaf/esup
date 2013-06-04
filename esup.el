@@ -136,7 +136,8 @@ Includes execution time, gc time and number of gc pauses."
                 :initform 0
                 :type number
                 :accessor get-start-point
-                :documentation "The start position of the benchmarked expression.")
+                :documentation
+                "The start position of the benchmarked expression.")
    (line-number :initarg :line-number
                 :initform 0
                 :type number
@@ -146,7 +147,8 @@ Includes execution time, gc time and number of gc pauses."
                       :initform ""
                       :type string
                       :accessor get-expression-string
-                      :documentation "The string representation of the benchmarked expression.")
+                      :documentation
+                      "A string representation of the benchmarked expression.")
    (end-point :initarg :end-point
               :initform 0
               :type number
@@ -265,7 +267,9 @@ Returns a list of class `esup-result'."
 
 (defun esup-drop-insignificant-times (results)
   "Remove inconsequential entries and sort RESULTS."
-    (cl-delete-if (lambda (a) (< a esup-insignificant-time)) results :key 'get-exec-time)
+    (cl-delete-if (lambda (a) (< a esup-insignificant-time))
+                  results
+                  :key 'get-exec-time)
     (cl-sort results '> :key 'get-exec-time))
 
 (defun esup-update-percentages (results)
