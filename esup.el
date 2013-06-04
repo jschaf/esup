@@ -56,6 +56,7 @@
 (defgroup esup nil
   "A major mode for the Emacs Start Up Profiler."
   :prefix "esup-"
+  :version "0.4"
   :group 'languages)
 
 ;; TODO: find out how emacs actually loads the files
