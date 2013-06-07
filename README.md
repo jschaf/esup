@@ -26,7 +26,7 @@ First tell `package.el` to use one of the package repository:
 
 Then install esup:
 
-<kbd>M-x install-package RET esup RET</kbd>
+<kbd>M-x package-install RET esup RET</kbd>
 
 **El-Get**
 
