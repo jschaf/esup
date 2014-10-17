@@ -509,7 +509,7 @@ Returns a list of class `esup-result'."
           do
           (erase-buffer)
           (insert (oref result :expression-string))
-          (font-lock-fontify-buffer)
+          (font-lock-ensure)
           (oset result :expression-string (buffer-string)))
     results))
 
