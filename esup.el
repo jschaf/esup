@@ -1,4 +1,4 @@
-;;; esup.el --- the Emacs StartUp Profiler (ESUP)
+;;; esup.el --- the Emacs StartUp Profiler (ESUP) -*- lexical-binding: t -*-
 
 ;; Copyright (C) 2013 Joe Schafer
 
@@ -523,13 +523,6 @@ Returns a list of class `esup-result'."
     results))
 
 
-;; Enable lexical binding.  Shouldn't affect Emacsen without lexbind
-;; support.
-;;
-;; Local Variables:
-;; lexical-binding: t
-;; End:
-
 (provide 'esup)
 
 ;;; esup.el ends here
