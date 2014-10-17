@@ -7,7 +7,7 @@
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
 ;; Version:  0.4
-;; Keywords:  emacs-lisp, elisp, profile, startup
+;; Keywords: convenience, processes
 
 ;; This file is NOT part of GNU Emacs.
 
