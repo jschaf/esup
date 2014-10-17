@@ -6,7 +6,7 @@
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.3
+;; Version:  0.4
 ;; Keywords:  emacs-lisp, elisp, profile, startup
 
 ;; This file is NOT part of GNU Emacs.
