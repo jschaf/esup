@@ -288,7 +288,7 @@ Includes execution time, gc time and number of gc pauses."
                        "-l" "esup-child"
                        (format "--eval=(esup-child-run \"%s\" \"%s\")"
                                esup-user-init-file
-                               esup-server-process)
+                               esup-server-port)
                        "-f" "esup-batch"))
   (set-process-sentinel esup-child-process 'esup-child-process-sentinel))
 

@@ -76,11 +76,11 @@
   "A record of benchmarked results.")
 
 (defvar esup-child-parent-process nil
-  "The parent process for the Emacs being profiled.
-This is network process that the parent Emacs controls that we
-send our results back too.")
+  "The network process that connects to the parent Emacs.
+We send our results back to the parent Emacs via this network
+process.")
 
-(defun esup-child-connect (port)
+(defun esup-child-connect-to-parent (port)
   "Connect to the parent process at PORT."
   (open-network-stream
           "*esup-child-connection*"
@@ -89,19 +89,20 @@ send our results back too.")
           port
           :type 'plain))
 
-(defun esup-child-run (init-file parent-process)
+(defun esup-child-run (init-file port)
   "Function for the profiled Emacs to run."
-  (require 'cl)
-  (let (
-        results)
+  (setq esup-child-parent-process (esup-child-connect-to-parent port))
+  (let (results)
     (ignore-errors
       (add-to-list 'load-path (file-name-directory init-file))
       (setq results (esup-child-profile-file init-file))
-      (find-file esup-results-file)
-      (erase-buffer)
-      (prin1 results (current-buffer))
-      (basic-save-buffer)
-      (setq desktop-save-mode nil))
+      ;; (find-file esup-results-file)
+      ;; (erase-buffer)
+      ;; (prin1 results (current-buffer))
+      ;; (basic-save-buffer)
+      ;; (setq desktop-save-mode nil))
+      (process-send-string esup-child-parent-process
+                           (prin1-to-string results))
     (kill-emacs)))
 
 (defun esup-child-chomp (str)
