@@ -31,7 +31,7 @@
 
 ;; We don't use :accesssor for class slots because it cause a
 ;; byte-compiler error even if we use the accessor.  The error text is
-;; below:
+;; below.  This is fixed in Emacs 24.4, i.e Emacs 25:
 ;;
 ;; Unused lexical variable `scoped-class'
 (defclass esup-result ()
@@ -97,20 +97,14 @@ process.")
 (defun esup-child-run (init-file port)
   "Function for the profiled Emacs to run."
   (setq esup-child-parent-process (esup-child-connect-to-parent port))
-  (let (results)
-    (ignore-errors
-      (add-to-list 'load-path (file-name-directory init-file))
-      (setq results (esup-child-profile-file init-file))
-      (message "results: %S" results)
-      ;; (find-file esup-results-file)
-      ;; (erase-buffer)
-      ;; (prin1 results (current-buffer))
-      ;; (basic-save-buffer)
-      ;; (setq desktop-save-mode nil))
-      (esup-child-send-to-parent results)
-
-    ;; (kill-emacs)
-    )))
+  (set-process-query-on-exit-flag esup-child-parent-process nil)
+  (toggle-debug-on-error)
+  (let (esup--profile-results)
+    (setq esup--profile-results (esup-child-profile-file init-file))
+    (message "results: %S" esup--profile-results)
+    (esup-child-send-to-parent esup--profile-results)
+    (kill-emacs)
+    ))
 
 (defun esup-child-chomp (str)
   "Chomp leading and tailing whitespace from STR."
@@ -174,18 +168,18 @@ Returns a list of class `esup-result'."
          (line-number (line-number-at-pos start))
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
-        load-file-name)
+        esup--load-file-name)
     (esup-child-send-to-parent
-     (format "profiling %s:%s %s" file-name line-number
+     (format "\nprofiling %s:%s %s" file-name line-number
              (buffer-substring-no-properties start (min end (+ 30 start)))))
     ;; Recursively profile loaded files.
     (if (looking-at "(load ")
         (progn
           (goto-char (match-end 0))
-          (setq load-file-name (buffer-substring
+          (setq esup--load-file-name (buffer-substring
                                 (point)
                                 (progn (forward-sexp 1) (point))))
-          (esup-child-profile-file load-file-name))
+          (esup-child-profile-file esup--load-file-name))
       ;; Have this function always return a list of `esup-result' to
       ;; simplify processing because a loaded file will return a list
       ;; of results.

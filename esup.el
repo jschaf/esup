@@ -26,7 +26,7 @@
 ;; Place esup.el on your `load-path' by adding this to your
 ;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
 ;;
-;; (add-to-list 'load-path "~/dir/to-esup")
+;; add-to-list 'load-path "~/dir/to-esup")
 ;;
 ;; Load the code:
 ;;
@@ -244,7 +244,7 @@ Includes execution time, gc time and number of gc pauses."
    :host 'local
    :service port
    :family nil
-   :nowait t
+   :nowait nil
    :stop nil
    :buffer esup-server-buffer
    :coding 'utf-8
@@ -287,6 +287,7 @@ Includes execution time, gc time and number of gc pauses."
                        (if esup-run-as-batch-p
                            "-q --batch"
                          "-q")
+                       "--debug-init"
                        "-L" esup-load-path
                        "-l" "esup-child"
                        (format "--eval=(esup-child-run \"%s\" \"%s\")"
