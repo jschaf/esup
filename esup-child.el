@@ -75,7 +75,12 @@
                :documentation "The percentage of time taken by expression."))
   "A record of benchmarked results.")
 
-(defvar esup-child-parent-process nil
+(defvar esup-child-parent-log-process nil
+  "The network process that connects to the parent Emacs.
+We send our log information back to the parent Emacs via this
+network process.")
+
+(defvar esup-child-parent-results-process nil
   "The network process that connects to the parent Emacs.
 We send our results back to the parent Emacs via this network
 process.")
@@ -89,22 +94,31 @@ process.")
           port
           :type 'plain))
 
-(defun esup-child-send-to-parent (data)
-  "Send DATA to the parent process."
-  (process-send-string esup-child-parent-process data))
+(defun esup-child-init-stream (port init-message)
+  "Create process on PORT, send INIT-MESSAGE, and return the process."
+  (let ((proc (esup-child-connect-to-parent port)))
+    (set-process-query-on-exit-flag proc nil)
+    (process-send-string proc init-message)
+    proc))
 
 (defun esup-child-send-log (format-str &rest args)
   "Send FORMAT-STR formatted with ARGS as a log message."
-  (esup-child-send-to-parent (apply 'format (concat "LOG: " format-str) args)))
+  (process-send-string esup-child-parent-log-process
+                       (apply 'format (concat "LOG: " format-str) args)))
 
 (defun esup-child-send-result (result)
   "Send RESULT to the parent process."
-  (esup-child-send-to-parent (prin1-to-string result)))
+  (process-send-string esup-child-parent-results-process
+                       (prin1-to-string result)))
 
 (defun esup-child-run (init-file port)
   "Profile INIT-FILE and send results to localhost:PORT."
-  (setq esup-child-parent-process (esup-child-connect-to-parent port))
-  (set-process-query-on-exit-flag esup-child-parent-process nil)
+
+  (setq esup-child-parent-log-process
+        (esup-child-init-stream port "LOGSTREAM"))
+  (setq esup-child-parent-results-process
+        (esup-child-init-stream port "RESULTSSTREAM"))
+
   (toggle-debug-on-error)
   (prog1
     (esup-child-profile-file init-file)
@@ -175,7 +189,7 @@ Returns a list of class `esup-result'."
         esup--load-file-name
         esup--profile-results)
     (esup-child-send-log
-     "\nprofiling %s:%s %s" file-name line-number
+     "profiling %s:%s %s\n" file-name line-number
      (buffer-substring-no-properties start (min end (+ 30 start))))
     ;; Recursively profile loaded files.
     (if (looking-at "(load ")

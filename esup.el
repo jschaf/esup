@@ -231,8 +231,31 @@ Includes execution time, gc time and number of gc pauses."
   "The process of the parent Emacs to receive information for the
   child.")
 
-(defvar esup-server-buffer "*esup-log*"
+(defvar esup-child-results-port nil
+  "The port by which the child Emacs sends profile results.")
+
+(defvar esup-child-log-port nil
+  "The port by which the child Emacs sends log information.")
+
+(defvar esup-server-log-buffer "*esup-log*"
   "The log buffer for esup server messages.")
+
+(defun esup-server-log (format-str &rest args)
+  "Log FORMAT-STR with format ARGS to `esup-server-log-buffer'."
+  (unless (string-empty-p format-str)
+    (with-current-buffer esup-server-log-buffer
+      (unless (bobp) (insert "\n"))
+      (goto-char (point-max))
+      (insert (apply 'format  format-str args)))))
+
+(defvar esup-incoming-results-buffer "*esup-results*"
+  "The buffer to hold incoming information from the child Emacs.")
+
+(defun esup-store-partial-result (result-str)
+  "Write RESULT-STR to `esup-incoming-results-buffer'."
+  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (goto-char (point-max))
+    (insert result-str)))
 
 (defun esup-server-create (port)
   "Create the esup parent server at localhost:PORT."
@@ -246,7 +269,7 @@ Includes execution time, gc time and number of gc pauses."
    :family nil
    :nowait t
    :stop nil
-   :buffer esup-server-buffer
+   :buffer esup-server-log-buffer
    :coding 'utf-8
    :noquery t
    :filter 'esup--server-filter
@@ -255,26 +278,40 @@ Includes execution time, gc time and number of gc pauses."
 
 (defun esup--server-filter (proc string)
   (cond
-   ((string-prefix-p "LOG: " string)
-    (with-current-buffer esup-server-buffer
-      (insert (format "proc: %s str: %s" proc string)))
-    )
+   ((string-prefix-p "LOGSTREAM" string)
+    (setq esup-child-log-port (process-contact proc :service))
+    (esup-server-log "Set information from port %s to be the log process"
+                     esup-child-log-port)
+    ;; There might be information that tagged along with LOGSTREAM
+    (esup-server-log (substring string
+                                (length "LOGSTREAM")
+                                (length string))))
+
+   ((string-prefix-p "RESULTSSTREAM" string)
+    (setq esup-child-results-port (process-contact proc :service))
+    (esup-server-log "Set information from port %s to be the results process"
+                     esup-child-results-port)
+    ;; There might be information that tagged along with RESULTSSTREAM
+    (esup-store-partial-result (substring string
+                                          (length "RESULTSSTREAM")
+                                          (length string))))
+
+   ((eq esup-child-results-port (process-contact proc :service))
+    (esup-store-partial-result string))
+
+   ((eq esup-child-log-port (process-contact proc :service))
+    (esup-server-log string))
 
    (t
-    nil
-    ;; (let ((result (read string)))
-    ;;   (with-current-buffer (esup-buffer)
-    ;;     (render result)))
-    )))
+    (error "Recieved unknown message type"))))
 
 (defun esup--server-sentinel (proc event)
-  (with-current-buffer esup-server-buffer
-    (insert "\n" (format "\nsentinel: proc: %s, event %s" proc event))))
+  (esup-server-log "name: %s, sentinel: proc: %s, event %s"
+                   (process-name proc) proc event))
 
 (defun esup--server-logger (server connection message)
-  (with-current-buffer esup-server-buffer
-    (insert "\n" (format "\nlogged: server %s, connection %s, message %s"
-                         server connection message))))
+  (esup-server-log "logged: server %s, connection %s, message %s"
+                   server connection message))
 
 ;;;###autoload
 (defun esup ()
@@ -282,8 +319,11 @@ Includes execution time, gc time and number of gc pauses."
   (interactive)
   (message "Starting esup...")
 
-  (with-current-buffer (get-buffer-create esup-server-buffer)
+  (with-current-buffer (get-buffer-create esup-server-log-buffer)
     (erase-buffer))
+  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (erase-buffer))
+
   (when esup-server-process
     (delete-process esup-server-process))
   (setq esup-server-process (esup-server-create esup-server-port))
@@ -429,7 +469,7 @@ Includes execution time, gc time and number of gc pauses."
 (defun esup-read-results ()
   "Read results from `esup-results-file' and return the list."
   (let (results)
-    (with-current-buffer (find-file-noselect esup-results-file)
+    (with-current-buffer (get-buffer esup-incoming-results-buffer)
       (goto-char (point-min))
       (setq results (read (current-buffer)))
       (kill-buffer (current-buffer)))
