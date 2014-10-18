@@ -103,7 +103,7 @@ process.")
       ;; (setq desktop-save-mode nil))
       (process-send-string esup-child-parent-process
                            (prin1-to-string results))
-    (kill-emacs)))
+    (kill-emacs))))
 
 (defun esup-child-chomp (str)
   "Chomp leading and tailing whitespace from STR."
