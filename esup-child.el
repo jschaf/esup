@@ -1,0 +1,191 @@
+;;; esup-child.el --- lisp file for child Emacs to run. -*- lexical-binding: t -*-
+
+;; Copyright (C) 2014 Joe Schafer
+
+;; Author: Joe Schafer <joe@jschaf.com>
+;; Version: 0.1
+;; Keywords:  convenience
+
+;; This program is free software; you can redistribute it and/or modify
+;; it under the terms of the GNU General Public License as published by
+;; the Free Software Foundation, either version 3 of the License, or
+;; (at your option) any later version.
+
+;; This program is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; The Emacs invoked to be timed will load this file.
+;;
+;; See documentation on https://github.com/jschaf/esup
+
+;;; Code:
+
+(require 'eieio)
+
+;; We don't use :accesssor for class slots because it cause a
+;; byte-compiler error even if we use the accessor.  The error text is
+;; below:
+;;
+;; Unused lexical variable `scoped-class'
+(defclass esup-result ()
+  ((file :initarg :file
+         :initform ""
+         :type string
+         :documentation "The file location for the result.")
+   (start-point :initarg :start-point
+                :initform 0
+                :type number
+                :documentation
+                "The start position of the benchmarked expression.")
+   (line-number :initarg :line-number
+                :initform 0
+                :type number
+                :documentation "The beginning line number of the expression.")
+   (expression-string :initarg :expression-string
+                      :initform ""
+                      :type string
+                      :documentation
+                      "A string representation of the benchmarked expression.")
+   (end-point :initarg :end-point
+              :initform 0
+              :type number
+              :documentation "The end position of the benchmarked expression.")
+   (exec-time :initarg :exec-time
+              :initform 0
+              :type number
+              :documentation)
+   (gc-number :initarg :gc-number
+              :initform 0
+              :type number
+              :documentation "The number of garbage collections that ran.")
+   (gc-time :initarg :gc-time
+            :initform 0
+            :type number
+            :documentation "The time taken by garbage collection.")
+   (percentage :initarg :percentage
+               :initform 0
+               :type number
+               :documentation "The percentage of time taken by expression."))
+  "A record of benchmarked results.")
+
+(defvar esup-child-parent-process nil
+  "The parent process for the Emacs being profiled.
+This is network process that the parent Emacs controls that we
+send our results back too.")
+
+(defun esup-child-connect (port)
+  "Connect to the parent process at PORT."
+  (open-network-stream
+          "*esup-child-connection*"
+          "*esup-child-connection*"
+          "localhost"
+          port
+          :type 'plain))
+
+(defun esup-child-run (init-file parent-process)
+  "Function for the profiled Emacs to run."
+  (require 'cl)
+  (let (
+        results)
+    (ignore-errors
+      (add-to-list 'load-path (file-name-directory init-file))
+      (setq results (esup-child-profile-file init-file))
+      (find-file esup-results-file)
+      (erase-buffer)
+      (prin1 results (current-buffer))
+      (basic-save-buffer)
+      (setq desktop-save-mode nil))
+    (kill-emacs)))
+
+(defun esup-child-chomp (str)
+  "Chomp leading and tailing whitespace from STR."
+  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
+                       str)
+    (setq str (replace-match "" t t str)))
+  str)
+
+(defun esup-child-profile-file (file-name)
+  "Profile FILE-NAME and return the benchmarked expressions."
+  (let ((clean-file (esup-child-chomp file-name))
+        abs-file-path)
+    ;; Either look up the variable or remove the quotes
+    (setq clean-file
+          (or (symbol-value (intern-soft clean-file))
+              (replace-regexp-in-string "\"" "" clean-file)))
+
+    (setq abs-file-path
+          (locate-file clean-file load-path
+                       ;; Add empty string in case the user has (load
+                       ;; "file.el"), otherwise we'll look for file.el.el
+                       (cons "" load-suffixes)))
+    ;; TODO: A file with no sexps (either nothing or comments) will
+    ;; cause an error.
+    (message "esup: loading %s" abs-file-path)
+    (esup-child-profile-buffer (find-file-noselect abs-file-path))))
+
+(defun esup-child-profile-buffer (buffer)
+  "Profile BUFFER and return the benchmarked expressions."
+  (with-current-buffer buffer
+    (goto-char (point-min))
+    ;; The only way to reliably figure out if we're done is to compare
+    ;; sexp positions.  `forward-sexp' handles all the complexities of
+    ;; white-space and comments.
+    (let ((buffer-read-only t)
+          (last-start -1)
+          (end (progn (forward-sexp 1) (point)))
+          (start (progn (forward-sexp -1) (point)))
+          results)
+
+      (while (> start last-start)
+        (setq results (append results (esup-child-profile-sexp start end)))
+        (setq last-start start)
+        (goto-char end)
+        ;; Skip "comments" generated by the byte compiler.
+        (while (looking-at "[\s\t\n\r]*#@\\([0-9]+\\) ")
+          (goto-char (+ (match-end 0) (string-to-number (match-string 1)))))
+        (forward-sexp 1)
+        (setq end (point))
+        (forward-sexp -1)
+        (setq start (point)))
+      results)))
+
+(defun esup-child-profile-sexp (start end)
+  "Profile the sexp between START and END in the current buffer.
+Returns a list of class `esup-result'."
+  (let* ((sexp-string (buffer-substring start end))
+         (sexp (car (read-from-string
+                     sexp-string)))
+         (line-number (line-number-at-pos start))
+         (benchmark (benchmark-run (eval sexp)))
+         (file-name (buffer-file-name))
+        load-file-name)
+    ;; Recursively profile loaded files.
+    (if (looking-at "(load ")
+        (progn
+          (goto-char (match-end 0))
+          (setq load-file-name (buffer-substring
+                                (point)
+                                (progn (forward-sexp 1) (point))))
+          (esup-child-profile-file load-file-name))
+      ;; Have this function always return a list of `esup-result' to
+      ;; simplify processing because a loaded file will return a list
+      ;; of results.
+      (list (esup-result "esup-result"
+               :file file-name
+               :expression-string sexp-string
+               :start-point start :end-point end
+               :line-number line-number
+               :exec-time (nth 0 benchmark)
+               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark))))))
+
+
+
+(provide 'esup-child)
+;;; esup-child.el ends here
