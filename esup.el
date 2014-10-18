@@ -244,7 +244,7 @@ Includes execution time, gc time and number of gc pauses."
    :host 'local
    :service port
    :family nil
-   :nowait nil
+   :nowait t
    :stop nil
    :buffer esup-server-buffer
    :coding 'utf-8
@@ -254,8 +254,18 @@ Includes execution time, gc time and number of gc pauses."
    :log 'esup--server-logger))
 
 (defun esup--server-filter (proc string)
-  (with-current-buffer esup-server-buffer
-    (insert "\n" (format "\nfilter: proc: %s str: %s" proc string))))
+  (cond
+   ((string-prefix-p "LOG: " string)
+    (with-current-buffer esup-server-buffer
+      (insert (format "proc: %s str: %s" proc string)))
+    )
+
+   (t
+    nil
+    ;; (let ((result (read string)))
+    ;;   (with-current-buffer (esup-buffer)
+    ;;     (render result)))
+    )))
 
 (defun esup--server-sentinel (proc event)
   (with-current-buffer esup-server-buffer

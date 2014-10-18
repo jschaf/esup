@@ -91,20 +91,24 @@ process.")
 
 (defun esup-child-send-to-parent (data)
   "Send DATA to the parent process."
-  (process-send-string esup-child-parent-process
-                           (prin1-to-string data)))
+  (process-send-string esup-child-parent-process data))
+
+(defun esup-child-send-log (format-str &rest args)
+  "Send FORMAT-STR formatted with ARGS as a log message."
+  (esup-child-send-to-parent (apply 'format (concat "LOG: " format-str) args)))
+
+(defun esup-child-send-result (result)
+  "Send RESULT to the parent process."
+  (esup-child-send-to-parent (prin1-to-string result)))
 
 (defun esup-child-run (init-file port)
-  "Function for the profiled Emacs to run."
+  "Profile INIT-FILE and send results to localhost:PORT."
   (setq esup-child-parent-process (esup-child-connect-to-parent port))
   (set-process-query-on-exit-flag esup-child-parent-process nil)
   (toggle-debug-on-error)
-  (let (esup--profile-results)
-    (setq esup--profile-results (esup-child-profile-file init-file))
-    (message "results: %S" esup--profile-results)
-    (esup-child-send-to-parent esup--profile-results)
-    (kill-emacs)
-    ))
+  (prog1
+    (esup-child-profile-file init-file)
+    (kill-emacs)))
 
 (defun esup-child-chomp (str)
   "Chomp leading and tailing whitespace from STR."
@@ -130,7 +134,7 @@ process.")
     ;; TODO: A file with no sexps (either nothing or comments) will
     ;; cause an error.
     (message "esup: loading %s" abs-file-path)
-    (esup-child-send-to-parent (format "esup: loading %s" abs-file-path))
+    (esup-child-send-log (format "loading %s" abs-file-path))
     (esup-child-profile-buffer (find-file-noselect abs-file-path))))
 
 (defun esup-child-profile-buffer (buffer)
@@ -168,10 +172,11 @@ Returns a list of class `esup-result'."
          (line-number (line-number-at-pos start))
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
-        esup--load-file-name)
-    (esup-child-send-to-parent
-     (format "\nprofiling %s:%s %s" file-name line-number
-             (buffer-substring-no-properties start (min end (+ 30 start)))))
+        esup--load-file-name
+        esup--profile-results)
+    (esup-child-send-log
+     "\nprofiling %s:%s %s" file-name line-number
+     (buffer-substring-no-properties start (min end (+ 30 start))))
     ;; Recursively profile loaded files.
     (if (looking-at "(load ")
         (progn
@@ -183,13 +188,17 @@ Returns a list of class `esup-result'."
       ;; Have this function always return a list of `esup-result' to
       ;; simplify processing because a loaded file will return a list
       ;; of results.
-      (list (esup-result "esup-result"
-               :file file-name
-               :expression-string sexp-string
-               :start-point start :end-point end
-               :line-number line-number
-               :exec-time (nth 0 benchmark)
-               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark))))))
+      (setq esup--profile-results
+            (list (esup-result "esup-result"
+                               :file file-name
+                               :expression-string sexp-string
+                               :start-point start :end-point end
+                               :line-number line-number
+                               :exec-time (nth 0 benchmark)
+                               :gc-number (nth 1 benchmark)
+                               :gc-time (nth 2 benchmark))))
+      (esup-child-send-result esup--profile-results)
+      esup--profile-results)))
 
 
 
