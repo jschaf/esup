@@ -89,6 +89,11 @@ process.")
           port
           :type 'plain))
 
+(defun esup-child-send-to-parent (data)
+  "Send DATA to the parent process."
+  (process-send-string esup-child-parent-process
+                           (prin1-to-string data)))
+
 (defun esup-child-run (init-file port)
   "Function for the profiled Emacs to run."
   (setq esup-child-parent-process (esup-child-connect-to-parent port))
@@ -96,14 +101,16 @@ process.")
     (ignore-errors
       (add-to-list 'load-path (file-name-directory init-file))
       (setq results (esup-child-profile-file init-file))
+      (message "results: %S" results)
       ;; (find-file esup-results-file)
       ;; (erase-buffer)
       ;; (prin1 results (current-buffer))
       ;; (basic-save-buffer)
       ;; (setq desktop-save-mode nil))
-      (process-send-string esup-child-parent-process
-                           (prin1-to-string results))
-    (kill-emacs))))
+      (esup-child-send-to-parent results)
+
+    ;; (kill-emacs)
+    )))
 
 (defun esup-child-chomp (str)
   "Chomp leading and tailing whitespace from STR."
@@ -129,6 +136,7 @@ process.")
     ;; TODO: A file with no sexps (either nothing or comments) will
     ;; cause an error.
     (message "esup: loading %s" abs-file-path)
+    (esup-child-send-to-parent (format "esup: loading %s" abs-file-path))
     (esup-child-profile-buffer (find-file-noselect abs-file-path))))
 
 (defun esup-child-profile-buffer (buffer)
@@ -167,6 +175,9 @@ Returns a list of class `esup-result'."
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
         load-file-name)
+    (esup-child-send-to-parent
+     (format "profiling %s:%s %s" file-name line-number
+             (buffer-substring-no-properties start (min end (+ 30 start)))))
     ;; Recursively profile loaded files.
     (if (looking-at "(load ")
         (progn

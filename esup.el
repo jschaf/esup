@@ -255,15 +255,15 @@ Includes execution time, gc time and number of gc pauses."
 
 (defun esup--server-filter (proc string)
   (with-current-buffer esup-server-buffer
-    (insert "\n" (format "filter: proc: %s str: %s" proc string))))
+    (insert "\n" (format "\nfilter: proc: %s str: %s" proc string))))
 
 (defun esup--server-sentinel (proc event)
   (with-current-buffer esup-server-buffer
-    (insert "\n" (format "sentinel: proc: %s, event %s" proc event))))
+    (insert "\n" (format "\nsentinel: proc: %s, event %s" proc event))))
 
 (defun esup--server-logger (server connection message)
   (with-current-buffer esup-server-buffer
-    (insert "\n" (format "logged: server %s, connection %s, message %s"
+    (insert "\n" (format "\nlogged: server %s, connection %s, message %s"
                          server connection message))))
 
 ;;;###autoload
@@ -272,7 +272,10 @@ Includes execution time, gc time and number of gc pauses."
   (interactive)
   (message "Starting esup...")
 
-  (when esup-server-process (delete-process esup-server-process))
+  (with-current-buffer (get-buffer-create esup-server-buffer)
+    (erase-buffer))
+  (when esup-server-process
+    (delete-process esup-server-process))
   (setq esup-server-process (esup-server-create esup-server-port))
 
   (setq esup-child-process
@@ -288,8 +291,7 @@ Includes execution time, gc time and number of gc pauses."
                        "-l" "esup-child"
                        (format "--eval=(esup-child-run \"%s\" \"%s\")"
                                esup-user-init-file
-                               esup-server-port)
-                       "-f" "esup-batch"))
+                               esup-server-port)))
   (set-process-sentinel esup-child-process 'esup-child-process-sentinel))
 
 (defun esup-follow-link (pos)
