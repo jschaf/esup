@@ -319,6 +319,7 @@ Includes execution time, gc time and number of gc pauses."
   (interactive)
   (message "Starting esup...")
 
+  (setq esup-last-result-start-point 1)
   (with-current-buffer (get-buffer-create esup-server-log-buffer)
     (erase-buffer))
   (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
@@ -385,8 +386,7 @@ Includes execution time, gc time and number of gc pauses."
   "Display the results of the benchmarking."
   (interactive)
   (let* ((results (esup-fontify-results
-                   (esup-drop-insignificant-times
-                    (esup-read-results))))
+                   (esup-read-results)))
          (result-break (esup-propertize-string "\n" 'result-break t))
          ;; Needed since the buffer is in `view-mode'.
          (inhibit-read-only t))
@@ -466,14 +466,33 @@ Includes execution time, gc time and number of gc pauses."
           (oset result :expression-string (buffer-string)))
     results))
 
+(defvar esup-last-result-start-point 1
+  "The end point of the last read result from `esup-incoming-results-buffer'.")
+
+(defun esup-read-result (start-point)
+  "Return one `esup-result' from the current-buffer at START-POINT.
+Returns either an `esup-result' or nil."
+  (goto-char start-point)
+  (read (current-buffer)))
+
+(defun esup-next-separator-end-point ()
+  "Return the end point of the next `esup-child-result-separator'."
+  (save-excursion (search-forward esup-child-result-separator
+                                  (point-max) 'noerror)))
+
 (defun esup-read-results ()
-  "Read results from `esup-results-file' and return the list."
-  (let (results)
+  "Read all complete `esup-result's from `esup-incoming-results-buffer'."
+  (message "wtf")
+  (let (results sep-end-point)
     (with-current-buffer (get-buffer esup-incoming-results-buffer)
-      (goto-char (point-min))
-      (setq results (read (current-buffer)))
-      (kill-buffer (current-buffer)))
-    results))
+      (goto-char esup-last-result-start-point)
+      (message "at %s" esup-last-result-start-point)
+      (unless (eobp)
+        (while (setq sep-end-point (esup-next-separator-end-point))
+          (setq results (cons (car (esup-read-result (point))) results))
+          (setq esup-last-result-start-point sep-end-point)
+          (goto-char esup-last-result-start-point))))
+    (nreverse results)))
 
 
 (provide 'esup)

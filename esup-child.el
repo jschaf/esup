@@ -106,10 +106,21 @@ process.")
   (process-send-string esup-child-parent-log-process
                        (apply 'format (concat "LOG: " format-str) args)))
 
-(defun esup-child-send-result (result)
-  "Send RESULT to the parent process."
+(defun esup-child-send-result (result &optional no-serialize)
+  "Send RESULT to the parent process.
+If NO-SERIALIZE is non-nil then don't serialize RESULT with
+`prin1-to-string'."
   (process-send-string esup-child-parent-results-process
-                       (prin1-to-string result)))
+                       (if no-serialize
+                           result
+                         (prin1-to-string result))))
+
+(defvar esup-child-result-separator "\n;;ESUP-RESULT-SEPARATOR;;\n"
+  "The separator between results.
+The parent Emacs uses the separator to know when the child has
+sent a full result.  Emacs accepts network input only when it's
+not busy and in bunches of about 500 bytes.  So, we might not get
+a complete result.")
 
 (defun esup-child-run (init-file port)
   "Profile INIT-FILE and send results to localhost:PORT."
@@ -189,7 +200,7 @@ Returns a list of class `esup-result'."
         esup--load-file-name
         esup--profile-results)
     (esup-child-send-log
-     "profiling %s:%s %s\n" file-name line-number
+     "profiling sexp %s:%s %s\n" file-name line-number
      (buffer-substring-no-properties start (min end (+ 30 start))))
     ;; Recursively profile loaded files.
     (if (looking-at "(load ")
@@ -212,6 +223,7 @@ Returns a list of class `esup-result'."
                                :gc-number (nth 1 benchmark)
                                :gc-time (nth 2 benchmark))))
       (esup-child-send-result esup--profile-results)
+      (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results)))
 
 
