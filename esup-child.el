@@ -27,6 +27,7 @@
 
 ;;; Code:
 
+(require 'benchmark)
 (require 'eieio)
 
 ;; We don't use :accesssor for class slots because it cause a

@@ -43,7 +43,6 @@
 ;; to profile each SEXP.  After the profiled Emacs is complete, it
 ;; will exit and your Emacs will display the results.
 
-(require 'benchmark)
 
 ;; We need `esup-result'
 (require 'esup-child)
