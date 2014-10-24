@@ -71,9 +71,6 @@ regular Emacs, so the timing information is not as realistic.  If
 you don't want to the benchmarked Emacs frame to appear when
 running `esup', set this to t.")
 
-(defcustom esup-results-file "~/.esup-results.el"
-  "Where to save the results of profiling.")
-
 (defcustom esup-insignificant-time 0.02
   "Only show expressions that take longer than this time.")
 
