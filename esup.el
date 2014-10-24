@@ -481,7 +481,6 @@ Returns either an `esup-result' or nil."
 
 (defun esup-read-results ()
   "Read all complete `esup-result's from `esup-incoming-results-buffer'."
-  (message "wtf")
   (let (results sep-end-point)
     (with-current-buffer (get-buffer esup-incoming-results-buffer)
       (goto-char esup-last-result-start-point)
