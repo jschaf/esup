@@ -6,7 +6,7 @@
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.4
+;; Version:  0.5
 ;; Keywords: convenience, processes
 
 ;; This file is NOT part of GNU Emacs.
@@ -58,7 +58,7 @@
 (defgroup esup nil
   "A major mode for the Emacs Start Up Profiler."
   :prefix "esup-"
-  :version "0.4"
+  :version "0.5"
   :group 'languages)
 
 (defcustom esup-user-init-file user-init-file
