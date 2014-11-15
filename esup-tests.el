@@ -1,4 +1,14 @@
-(require 'esup)
+;;; esup-tests.el --- tests for esup -*- lexical-binding: t -*-
+
+;;; Commentary:
+
+;; Tests for esup-child.el and esup.el functionality.
+
+;;; Code:
+
+(eval-when-compile
+  (require 'cl))
+
 (require 'esup-child)
 
 (defmacro esup/with-mock-buffer (str &rest body)
@@ -47,3 +57,6 @@ This is known to fail."
           (esup/profile-single-sexp
            "(progn (garbage-collect) (garbage-collect))")
           :gc-number))))
+
+(provide 'esup-tests)
+;;; esup-tests.el ends here
