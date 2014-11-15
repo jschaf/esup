@@ -63,4 +63,4 @@ This is known to fail."
           :gc-number))))
 
 (provide 'esup-tests)
-;;; esup-tests.el ends here
+;;; esup-test.el ends here
