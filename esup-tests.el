@@ -2,7 +2,7 @@
 (require 'esup-child)
 
 (defmacro esup/with-mock-buffer (str &rest body)
-  "Run BODY in a fake buffer filled by STR."
+  "Create buffer with STR and run BODY."
   (declare (indent 1))
   `(with-temp-buffer
      (let ((buffer-file-name "*esup-ert-test*"))
@@ -11,7 +11,7 @@
        ,@body)))
 
 (defmacro esup/profile-single-sexp (sexp-str)
-  "Run `esup-profile-sexp' on SEXP-STR and return the result."
+  "Run `esup-child-profile-sexp' on SEXP-STR and return the result."
   `(esup/with-mock-buffer ,sexp-str
      (car (esup-child-profile-sexp (point-min) (point-max)))))
 
@@ -20,7 +20,7 @@
        (eq end (oref esup-result :end-point))))
 
 (ert-deftest esup/start-end ()
-  "Test that `esup-profile-sexp' has the right start and end points."
+  "Test that `esup-child-profile-sexp' has the right start and end points."
   (loop for (input start end) in
            '(("()" 1 3)
              ("'(1)" 1 5))
