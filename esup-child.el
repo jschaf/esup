@@ -193,7 +193,7 @@ a complete result.")
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
   (let* ((sexp-string (buffer-substring start end))
-         (sexp (if (string-empty-p sexp-string)
+         (sexp (if (string-equal sexp-string "")
                    ""
                  (car-safe (read-from-string sexp-string))))
          (line-number (line-number-at-pos start))

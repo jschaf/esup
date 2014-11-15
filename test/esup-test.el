@@ -10,7 +10,6 @@
   (require 'cl))
 
 (require 'esup-child)
-(require 'subr-x)
 (require 'noflet)
 
 (defmacro esup/with-mock-buffer (str &rest body)
