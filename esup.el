@@ -509,7 +509,13 @@ Returns a list of class `esup-result'."
           do
           (erase-buffer)
           (insert (oref result :expression-string))
-          (font-lock-ensure)
+          ;; font-lock-ensure is new to Emacs 25
+          (if (functionp 'font-lock-ensure)
+              (font-lock-ensure)
+            ;; font-lock-fontify-buffer is marked as interactive only
+            ;; in Emacs 25.  Call interactively to avoid
+            ;; byte-compilation errors
+            (call-interactively 'font-lock-fontify-buffer))
           (oset result :expression-string (buffer-string)))
     results))
 
