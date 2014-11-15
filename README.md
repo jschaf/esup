@@ -11,9 +11,9 @@ Benchmark Emacs Startup time without ever leaving your Emacs.
 Installation
 ============
 
-**With Package (ELPA, MELPA, MARMALADE):**
+**With MELPA**
 
-First tell `package.el` to use one of the package repository:
+First, add the package repository:
 
 ```lisp
 (add-to-list 'package-archives
