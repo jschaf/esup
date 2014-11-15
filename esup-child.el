@@ -193,8 +193,9 @@ a complete result.")
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
   (let* ((sexp-string (buffer-substring start end))
-         (sexp (car (read-from-string
-                     sexp-string)))
+         (sexp (if (string-empty-p sexp-string)
+                   ""
+                 (car-safe (read-from-string sexp-string))))
          (line-number (line-number-at-pos start))
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
@@ -203,29 +204,34 @@ Returns a list of class `esup-result'."
     (esup-child-send-log
      "profiling sexp %s:%s %s\n" file-name line-number
      (buffer-substring-no-properties start (min end (+ 30 start))))
-    ;; Recursively profile loaded files.
-    (if (looking-at "(load ")
-        (progn
-          (goto-char (match-end 0))
-          (setq esup--load-file-name (buffer-substring
-                                (point)
-                                (progn (forward-sexp 1) (point))))
-          (esup-child-profile-file esup--load-file-name))
-      ;; Have this function always return a list of `esup-result' to
-      ;; simplify processing because a loaded file will return a list
-      ;; of results.
-      (setq esup--profile-results
-            (list (esup-result "esup-result"
-                               :file file-name
-                               :expression-string sexp-string
-                               :start-point start :end-point end
-                               :line-number line-number
-                               :exec-time (nth 0 benchmark)
-                               :gc-number (nth 1 benchmark)
-                               :gc-time (nth 2 benchmark))))
-      (esup-child-send-result esup--profile-results)
-      (esup-child-send-result esup-child-result-separator 'no-serialize)
-      esup--profile-results)))
+
+    (cond
+     ((string-equal (esup-child-chomp sexp-string) "")
+       '())
+     ;; Recursively profile loaded files.
+     ((looking-at "(load ")
+      (goto-char (match-end 0))
+      (setq esup--load-file-name (buffer-substring
+                                  (point)
+                                  (progn (forward-sexp 1) (point))))
+      (esup-child-profile-file esup--load-file-name))
+
+      (t
+       ;; Have this function always return a list of `esup-result' to
+       ;; simplify processing because a loaded file will return a list
+       ;; of results.
+       (setq esup--profile-results
+             (list (esup-result "esup-result"
+                                :file file-name
+                                :expression-string sexp-string
+                                :start-point start :end-point end
+                                :line-number line-number
+                                :exec-time (nth 0 benchmark)
+                                :gc-number (nth 1 benchmark)
+                                :gc-time (nth 2 benchmark))))
+       (esup-child-send-result esup--profile-results)
+       (esup-child-send-result esup-child-result-separator 'no-serialize)
+       esup--profile-results))))
 
 (provide 'esup-child)
 ;;; esup-child.el ends here

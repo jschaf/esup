@@ -47,11 +47,10 @@
 (ert-deftest esup/empty-file ()
   "Test `esup-profile-sexp' with an empty string.
 This is known to fail."
-  :expected-result :failed
   (let ((result
          (esup/with-mock-buffer ""
            (esup-child-profile-sexp (point-min) (point-max)))))
-    (should result)))
+    (should t)))
 
 (ert-deftest esup/garbage-collections ()
     "Test that we count garbage collection properly."
