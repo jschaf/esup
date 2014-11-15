@@ -10,6 +10,7 @@
   (require 'cl))
 
 (require 'esup-child)
+(require 'subr-x)
 
 (defmacro esup/with-mock-buffer (str &rest body)
   "Create buffer with STR and run BODY."
