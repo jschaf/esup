@@ -71,7 +71,7 @@ regular Emacs, so the timing information is not as realistic.  If
 you don't want to the benchmarked Emacs frame to appear when
 running `esup', set this to t.")
 
-(defcustom esup-insignificant-time 0.02
+(defcustom esup-insignificant-time 0.009
   "Only show expressions that take longer than this time.")
 
 (defcustom esup-server-port 8124
