@@ -239,7 +239,7 @@ The child Emacs send data to this process on
 
 (defun esup-server-log (format-str &rest args)
   "Log FORMAT-STR with format ARGS to `esup-server-log-buffer'."
-  (unless (string-empty-p format-str)
+  (unless (string-equal format-str "")
     (with-current-buffer esup-server-log-buffer
       (unless (bobp) (insert "\n"))
       (goto-char (point-max))
