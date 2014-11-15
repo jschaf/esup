@@ -309,6 +309,9 @@ Includes execution time, gc time and number of gc pauses."
   (esup-server-log "logged: server %s, connection %s, message %s"
                    server connection message))
 
+(defvar esup-last-result-start-point 1
+  "The end point of the last read result from `esup-incoming-results-buffer'.")
+
 ;;;###autoload
 (defun esup ()
   "Profile the startup time of Emacs in the background."
@@ -462,9 +465,6 @@ Includes execution time, gc time and number of gc pauses."
             (call-interactively 'font-lock-fontify-buffer))
           (oset result :expression-string (buffer-string)))
     results))
-
-(defvar esup-last-result-start-point 1
-  "The end point of the last read result from `esup-incoming-results-buffer'.")
 
 (defun esup-read-result (start-point)
   "Return one `esup-result' from the current buffer at START-POINT.
