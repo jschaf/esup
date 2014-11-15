@@ -47,8 +47,7 @@
 ;; We need `esup-result'
 (require 'esup-child)
 
-(eval-when-compile
- (require 'cl-lib))
+(require 'cl-lib)
 
 ;;; Code:
 
