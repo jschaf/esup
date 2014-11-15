@@ -1,4 +1,4 @@
-language: emacs-lisp
+language: c
 env:
   matrix:
     - EMACS=emacs24
