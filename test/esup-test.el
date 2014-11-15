@@ -45,7 +45,6 @@
            (should (esup/points-eq-p (esup/profile-single-sexp input)
                                      start end))))
 
-
 (ert-deftest esup/empty-file ()
   "Test `esup-profile-sexp' with an empty string.
 This is known to fail."
