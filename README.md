@@ -1,4 +1,5 @@
-[![Build Status](https://travis-ci.org/jschaf/esup.svg?branch=master)](https://travis-ci.org/jschaf/esup)
+[![Build Status](https://travis-ci.org/jschaf/esup.svg?branch=master)](https://travis-ci.org/jschaf/esup) [![MELPA](http://melpa.org/packages/esup-badge.svg)](http://melpa.org/#/esup)
+
 
 ESUP - Emacs Start Up Profiler
 ==============================
