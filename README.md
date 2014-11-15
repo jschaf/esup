@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/jschaf/esup.svg?branch=master)](https://travis-ci.org/jschaf/esup)
+
 ESUP - Emacs Start Up Profiler
 ==============================
 
@@ -58,7 +60,7 @@ Usage
 =====
 
 Auto-load the starting function `esup`.
-    
+
 ```lisp
 (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ```
