@@ -49,7 +49,6 @@ This is known to fail."
            (esup-child-profile-sexp (point-min) (point-max)))))
     (should result)))
 
-
 (ert-deftest esup/garbage-collections ()
     "Test that we count garbage collection properly."
     (should
