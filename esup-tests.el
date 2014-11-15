@@ -26,6 +26,7 @@
      (car (esup-child-profile-sexp (point-min) (point-max)))))
 
 (defun esup/points-eq-p (esup-result start end)
+  "Return t if ESUP-RESULT match START and END."
   (and (eq start (oref esup-result :start-point))
        (eq end (oref esup-result :end-point))))
 
