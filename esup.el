@@ -224,8 +224,9 @@ Includes execution time, gc time and number of gc pauses."
         (t (insert (format "Process %s %s" process status)))))
 
 (defvar esup-server-process nil
-  "The process of the parent Emacs to receive information for the
-  child.")
+  "The parent Emacs' server process.
+The child Emacs send data to this process on
+`esup-child-results-port' and `esup-child-log-port'.")
 
 (defvar esup-child-results-port nil
   "The port by which the child Emacs sends profile results.")
