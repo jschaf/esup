@@ -227,7 +227,5 @@ Returns a list of class `esup-result'."
       (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results)))
 
-
-
 (provide 'esup-child)
 ;;; esup-child.el ends here
