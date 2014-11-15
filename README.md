@@ -20,31 +20,15 @@ First tell `package.el` to use one of the package repository:
              '("melpa" . "http://melpa.milkbox.net/packages/") t)
 ```
 
-*or*
-
-```lisp
-(add-to-list 'package-archives
-             '("marmalade" . "http://marmalade-repo.org/packages/") t)
-```
-
 Then install esup:
 
 <kbd>M-x package-install RET esup RET</kbd>
 
 **El-Get**
 
-Use the following recipe with el-get.
+`esup` is included in the El-Get repository
 
-```lisp
-(:name esup
-  :website "https://github.com/jschaf/esup"
-  :description "Emacs Start Up Profiler"
-  :type "github"
-  :branch "master"
-  :pkgname "jschaf/esup")
-```
-
-Then install esup:
+Install esup:
 
 <kbd>M-x el-get-install RET esup RET</kbd>
 
@@ -55,15 +39,10 @@ Download `esup.el` and place the download directory on your
 
 ```lisp
 (add-to-list 'load-path "~/.emacs.d/path/to/esup")
+(autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ```
 
 Usage
 =====
-
-Auto-load the starting function `esup`.
-
-```lisp
-(autoload 'esup "esup" "Emacs Start Up Profiler." nil)
-```
 
 To start Esup, run <kbd>M-x esup</kbd>, and watch the magic happen.
