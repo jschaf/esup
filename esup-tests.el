@@ -15,10 +15,14 @@
   "Create buffer with STR and run BODY."
   (declare (indent 1))
   `(with-temp-buffer
-     (let ((buffer-file-name "*esup-ert-test*"))
-       (insert ,str)
-       (goto-char (point-min))
-       ,@body)))
+     ;; We don't want to send anything over the network
+     (flet ((esup-child-send-log (&rest args) nil)
+            (esup-child-send-result (&rest args) nil))
+       ;; Create buffer-file-name because esup-child collects it.
+       (let ((buffer-file-name "*esup-ert-test*"))
+         (insert ,str)
+         (goto-char (point-min))
+         ,@body))))
 
 (defmacro esup/profile-single-sexp (sexp-str)
   "Run `esup-child-profile-sexp' on SEXP-STR and return the result."
