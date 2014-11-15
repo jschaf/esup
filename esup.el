@@ -26,7 +26,7 @@
 ;; Place esup.el on your `load-path' by adding this to your
 ;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
 ;;
-;; (add-to-list 'load-path "~/dir/to-esup")
+;; add-to-list 'load-path "~/dir/to-esup")
 ;;
 ;; Load the code:
 ;;
@@ -43,8 +43,10 @@
 ;; to profile each SEXP.  After the profiled Emacs is complete, it
 ;; will exit and your Emacs will display the results.
 
-(require 'benchmark)
-(require 'eieio)
+
+;; We need `esup-result'
+(require 'esup-child)
+
 (eval-when-compile
  (require 'cl-lib))
 
@@ -59,13 +61,8 @@
   :version "0.4"
   :group 'languages)
 
-;; TODO: find out how emacs actually loads the files
-;; `locate-user-emacs-file' and `user-init-file' look like starting
-;; points.
-(defcustom esup-user-init-files '("~/.emacs"
-                                  "~/.emacs.el"
-                                  "~/.emacs.d/init.el")
-  "Possible user init files to profile.")
+(defcustom esup-user-init-file user-init-file
+  "The user init files to profile.")
 
 (defcustom esup-run-as-batch-p nil
   "If non-nil, run the profiled Emacs as batch.
@@ -74,11 +71,11 @@ regular Emacs, so the timing information is not as realistic.  If
 you don't want to the benchmarked Emacs frame to appear when
 running `esup', set this to t.")
 
-(defcustom esup-results-file "~/.esup-results.el"
-  "Where to save the results of profiling.")
-
-(defcustom esup-insignificant-time 0.02
+(defcustom esup-insignificant-time 0.009
   "Only show expressions that take longer than this time.")
+
+(defcustom esup-server-port 8124
+  "The port for esup to communicate with the child Emacs.")
 
 (defface esup-timing-information
   '((t :inherit font-lock-type-face))
@@ -105,145 +102,17 @@ Includes execution time, gc time and number of gc pauses."
   :group 'esup
   :version "24.3")
 
-(defvar esup-process nil
-  "The current esup process.")
+(defvar esup-child-process nil
+  "The current esup child process, i.e the Emacs being timed.")
 
 (defvar esup-emacs-path (concat invocation-directory invocation-name)
   "Path to the Emacs binary used for profiling.")
 
-(defvar esup-esup-path
-  (or (and load-in-progress
-	   load-file-name)
-      (progn
-        ;; Prevent byte-compiler from complaining
-        (declare-function find-library-name "find-func")
-        (require 'find-func)
-        (find-library-name "esup")))
-  "Full path to esup.el.")
+(defvar esup-load-path
+  (file-name-directory (file-truename (buffer-file-name)))
+  "Full directory path to esup.el and esup-child.el.")
 
 
-;;; Model - functions for collecting and manipulating data.
-
-;; We don't use :accesssor for class slots because it cause a
-;; byte-compiler error even if we use the accessor.  The error text is
-;; below:
-;;
-;; Unused lexical variable `scoped-class'
-(defclass esup-result ()
-  ((file :initarg :file
-         :initform ""
-         :type string
-         :documentation "The file location for the result.")
-   (start-point :initarg :start-point
-                :initform 0
-                :type number
-                :documentation
-                "The start position of the benchmarked expression.")
-   (line-number :initarg :line-number
-                :initform 0
-                :type number
-                :documentation "The beginning line number of the expression.")
-   (expression-string :initarg :expression-string
-                      :initform ""
-                      :type string
-                      :documentation
-                      "A string representation of the benchmarked expression.")
-   (end-point :initarg :end-point
-              :initform 0
-              :type number
-              :documentation "The end position of the benchmarked expression.")
-   (exec-time :initarg :exec-time
-              :initform 0
-              :type number
-              :documentation)
-   (gc-number :initarg :gc-number
-              :initform 0
-              :type number
-              :documentation "The number of garbage collections that ran.")
-   (gc-time :initarg :gc-time
-            :initform 0
-            :type number
-            :documentation "The time taken by garbage collection.")
-   (percentage :initarg :percentage
-               :initform 0
-               :type number
-               :documentation "The percentage of time taken by expression."))
-  "A record of benchmarked results.")
-
-(defun esup-profile-file (file-name)
-  "Profile FILE-NAME and return the benchmarked expressions."
-  (let ((clean-file (esup-chomp file-name))
-        abs-file-path)
-    ;; Either look up the variable or remove the quotes
-    (setq clean-file
-          (or (symbol-value (intern-soft clean-file))
-              (replace-regexp-in-string "\"" "" clean-file)))
-
-    (setq abs-file-path
-          (locate-file clean-file load-path
-                       ;; Add empty string in case the user has (load
-                       ;; "file.el"), otherwise we'll look for file.el.el
-                       (cons "" load-suffixes)))
-    ;; TODO: A file with no sexps (either nothing or comments) will
-    ;; cause an error.
-    (message "esup: loading %s" abs-file-path)
-    (esup-profile-buffer (find-file-noselect abs-file-path))))
-
-(defun esup-profile-buffer (buffer)
-  "Profile BUFFER and return the benchmarked expressions."
-  (with-current-buffer buffer
-    (goto-char (point-min))
-    ;; The only way to reliably figure out if we're done is to compare
-    ;; sexp positions.  `forward-sexp' handles all the complexities of
-    ;; white-space and comments.
-    (let ((buffer-read-only t)
-          (last-start -1)
-          (end (progn (forward-sexp 1) (point)))
-          (start (progn (forward-sexp -1) (point)))
-          results)
-
-      (while (> start last-start)
-        (setq results (append results (esup-profile-sexp start end)))
-        (setq last-start start)
-        (goto-char end)
-        ;; Skip "comments" generated by the byte compiler.
-        (while (looking-at "[\s\t\n\r]*#@\\([0-9]+\\) ")
-          (goto-char (+ (match-end 0) (string-to-number (match-string 1)))))
-        (forward-sexp 1)
-        (setq end (point))
-        (forward-sexp -1)
-        (setq start (point)))
-      results)))
-
-(defun esup-profile-sexp (start end)
-  "Profile the sexp between START and END in the current buffer.
-Returns a list of class `esup-result'."
-  (let* ((sexp-string (buffer-substring start end))
-         (sexp (car (read-from-string
-                     sexp-string)))
-         (line-number (line-number-at-pos start))
-         (benchmark (benchmark-run (eval sexp)))
-         (file-name (buffer-file-name))
-        load-file-name)
-    ;; Recursively profile loaded files.
-    (if (looking-at "(load ")
-        (progn
-          (goto-char (match-end 0))
-          (setq load-file-name (buffer-substring
-                                (point)
-                                (progn (forward-sexp 1) (point))))
-          (esup-profile-file load-file-name))
-      ;; Have this function always return a list of `esup-result' to
-      ;; simplify processing because a loaded file will return a list
-      ;; of results.
-      (list (esup-result "esup-result"
-               :file file-name
-               :expression-string sexp-string
-               :start-point start :end-point end
-               :line-number line-number
-               :exec-time (nth 0 benchmark)
-               :gc-number (nth 1 benchmark) :gc-time (nth 2 benchmark))))))
-
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (loop for result in results
@@ -349,37 +218,115 @@ Returns a list of class `esup-result'."
     (when (get-text-property (point) 'result-break)
       (forward-char))))
 
-(defun esup-batch ()
-  "Function for the profiled Emacs to run."
-  (require 'cl)
-  (let ((init-file (car (cl-remove-if-not #'file-exists-p
-                                          esup-user-init-files)))
-        results)
-    (ignore-errors
-      (add-to-list 'load-path (file-name-directory init-file))
-      (setq results (esup-profile-file init-file))
-      (find-file esup-results-file)
-      (erase-buffer)
-      (prin1 results (current-buffer))
-      (basic-save-buffer)
-      (setq desktop-save-mode nil))
-    (kill-emacs)))
-
-(defun esup-process-sentinel (process status)
+(defun esup-child-process-sentinel (process status)
   "Monitor PROCESS for change in STATUS."
   (cond ((string= status "finished\n") (esup-display-results))
         (t (insert (format "Process %s %s" process status)))))
+
+(defvar esup-server-process nil
+  "The process of the parent Emacs to receive information for the
+  child.")
+
+(defvar esup-child-results-port nil
+  "The port by which the child Emacs sends profile results.")
+
+(defvar esup-child-log-port nil
+  "The port by which the child Emacs sends log information.")
+
+(defvar esup-server-log-buffer "*esup-log*"
+  "The log buffer for esup server messages.")
+
+(defun esup-server-log (format-str &rest args)
+  "Log FORMAT-STR with format ARGS to `esup-server-log-buffer'."
+  (unless (string-empty-p format-str)
+    (with-current-buffer esup-server-log-buffer
+      (unless (bobp) (insert "\n"))
+      (goto-char (point-max))
+      (insert (apply 'format  format-str args)))))
+
+(defvar esup-incoming-results-buffer "*esup-results*"
+  "The buffer to hold incoming information from the child Emacs.")
+
+(defun esup-store-partial-result (result-str)
+  "Write RESULT-STR to `esup-incoming-results-buffer'."
+  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (goto-char (point-max))
+    (insert result-str)))
+
+(defun esup-server-create (port)
+  "Create the esup parent server at localhost:PORT."
+  (interactive)
+  (make-network-process
+   :name "*esup-server*"
+   :type nil ; stream
+   :server t
+   :host 'local
+   :service port
+   :family nil
+   :nowait t
+   :stop nil
+   :buffer esup-server-log-buffer
+   :coding 'utf-8
+   :noquery t
+   :filter 'esup--server-filter
+   :sentinel 'esup--server-sentinel
+   :log 'esup--server-logger))
+
+(defun esup--server-filter (proc string)
+  (cond
+   ((string-prefix-p "LOGSTREAM" string)
+    (setq esup-child-log-port (process-contact proc :service))
+    (esup-server-log "Set information from port %s to be the log process"
+                     esup-child-log-port)
+    ;; There might be information that tagged along with LOGSTREAM
+    (esup-server-log (substring string
+                                (length "LOGSTREAM")
+                                (length string))))
+
+   ((string-prefix-p "RESULTSSTREAM" string)
+    (setq esup-child-results-port (process-contact proc :service))
+    (esup-server-log "Set information from port %s to be the results process"
+                     esup-child-results-port)
+    ;; There might be information that tagged along with RESULTSSTREAM
+    (esup-store-partial-result (substring string
+                                          (length "RESULTSSTREAM")
+                                          (length string))))
+
+   ((eq esup-child-results-port (process-contact proc :service))
+    (esup-store-partial-result string))
+
+   ((eq esup-child-log-port (process-contact proc :service))
+    (esup-server-log string))
+
+   (t
+    (error "Recieved unknown message type"))))
+
+(defun esup--server-sentinel (proc event)
+  (esup-server-log "name: %s, sentinel: proc: %s, event %s"
+                   (process-name proc) proc event))
+
+(defun esup--server-logger (server connection message)
+  (esup-server-log "logged: server %s, connection %s, message %s"
+                   server connection message))
 
 ;;;###autoload
 (defun esup ()
   "Profile the startup time of Emacs in the background."
   (interactive)
   (message "Starting esup...")
-  (with-current-buffer (get-buffer-create "*esup-log*")
+
+  (setq esup-last-result-start-point 1)
+  (with-current-buffer (get-buffer-create esup-server-log-buffer)
     (erase-buffer))
-  ;; TODO: have the emacs frame run in the background.
-  (setq esup-process
-        (start-process "*esup*" "*esup-log*"
+  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (erase-buffer))
+
+  (when esup-server-process
+    (delete-process esup-server-process))
+  (setq esup-server-process (esup-server-create esup-server-port))
+
+  (setq esup-child-process
+        (start-process "*esup-child*" "*esup-child*"
                        esup-emacs-path
                        ;; The option -q is combined with --batch
                        ;; because this `start-process' errors if we
@@ -387,9 +334,13 @@ Returns a list of class `esup-result'."
                        (if esup-run-as-batch-p
                            "-q --batch"
                          "-q")
-                       "-l" esup-esup-path
-                       "-f" "esup-batch"))
-  (set-process-sentinel esup-process 'esup-process-sentinel))
+                       "--debug-init"
+                       "-L" esup-load-path
+                       "-l" "esup-child"
+                       (format "--eval=(esup-child-run \"%s\" \"%s\")"
+                               esup-user-init-file
+                               esup-server-port)))
+  (set-process-sentinel esup-child-process 'esup-child-process-sentinel))
 
 (defun esup-follow-link (pos)
   "Follow the link that was clicked at point POS."
@@ -411,13 +362,6 @@ Returns a list of class `esup-result'."
   "Modify STR's font-lock-face property to FACE and return STR."
   (esup-propertize-string str 'font-lock-face face))
 
-(defun esup-chomp (str)
-  "Chomp leading and tailing whitespace from STR."
-  (while (string-match "\\`\n+\\|^\\s-+\\|\\s-+$\\|\n+\\'"
-                       str)
-    (setq str (replace-match "" t t str)))
-  str)
-
 
 ;;; View - rendering functions
 
@@ -437,9 +381,9 @@ Returns a list of class `esup-result'."
 (defun esup-display-results ()
   "Display the results of the benchmarking."
   (interactive)
-  (let* ((results (esup-fontify-results
-                   (esup-drop-insignificant-times
-                    (esup-read-results))))
+  (let* ((all-results (esup-fontify-results
+                   (esup-read-results)))
+         (results (esup-drop-insignificant-times all-results))
          (result-break (esup-propertize-string "\n" 'result-break t))
          ;; Needed since the buffer is in `view-mode'.
          (inhibit-read-only t))
@@ -519,16 +463,33 @@ Returns a list of class `esup-result'."
           (oset result :expression-string (buffer-string)))
     results))
 
+(defvar esup-last-result-start-point 1
+  "The end point of the last read result from `esup-incoming-results-buffer'.")
+
+(defun esup-read-result (start-point)
+  "Return one `esup-result' from the current-buffer at START-POINT.
+Returns either an `esup-result' or nil."
+  (goto-char start-point)
+  (read (current-buffer)))
+
+(defun esup-next-separator-end-point ()
+  "Return the end point of the next `esup-child-result-separator'."
+  (save-excursion (search-forward esup-child-result-separator
+                                  (point-max) 'noerror)))
+
 (defun esup-read-results ()
-  "Read results from `esup-results-file' and return the list."
-  (let (results)
-    (with-current-buffer (find-file-noselect esup-results-file)
-      (goto-char (point-min))
-      (setq results (read (current-buffer)))
-      (kill-buffer (current-buffer)))
-    results))
+  "Read all complete `esup-result's from `esup-incoming-results-buffer'."
+  (let (results sep-end-point)
+    (with-current-buffer (get-buffer esup-incoming-results-buffer)
+      (goto-char esup-last-result-start-point)
+      (message "at %s" esup-last-result-start-point)
+      (unless (eobp)
+        (while (setq sep-end-point (esup-next-separator-end-point))
+          (setq results (cons (car (esup-read-result (point))) results))
+          (setq esup-last-result-start-point sep-end-point)
+          (goto-char esup-last-result-start-point))))
+    (nreverse results)))
 
 
 (provide 'esup)
-
 ;;; esup.el ends here
