@@ -31,8 +31,8 @@
 (require 'eieio)
 
 ;; We don't use :accesssor for class slots because it cause a
-;; byte-compiler error even if we use the accessor.  The error text is
-;; below.  This is fixed in Emacs 24.4, i.e Emacs 25:
+;; byte-compiler error even if we use the accessor.  This is fixed in
+;; Emacs 25.  The error text is below:
 ;;
 ;; Unused lexical variable `scoped-class'
 (defclass esup-result ()
