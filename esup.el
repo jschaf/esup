@@ -468,8 +468,9 @@ The child Emacs send data to this process on
     results))
 
 (defun esup-read-result (start-point)
-  "Return one `esup-result' from the current buffer at START-POINT.
-Returns either an `esup-result' or nil."
+  "Return one `esup-result' object from the current buffer.
+Begins reading at START-POINT.
+Returns either an symbol `esup-result' or nil."
   (goto-char start-point)
   (read (current-buffer)))
 
@@ -479,7 +480,7 @@ Returns either an `esup-result' or nil."
                                   (point-max) 'noerror)))
 
 (defun esup-read-results ()
-  "Read all complete `esup-result's from `esup-incoming-results-buffer'."
+  "Read all `esup-result' objects from `esup-incoming-results-buffer'."
   (let (results sep-end-point)
     (with-current-buffer (get-buffer esup-incoming-results-buffer)
       (goto-char esup-last-result-start-point)
