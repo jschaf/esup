@@ -198,8 +198,8 @@ Returns a list of class `esup-result'."
          (line-number (line-number-at-pos start))
          (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
-        esup--load-file-name
-        esup--profile-results)
+         esup--load-file-name
+         esup--profile-results)
     (esup-child-send-log
      "profiling sexp %s:%s %s\n" file-name line-number
      (buffer-substring-no-properties start (min end (+ 30 start))))
