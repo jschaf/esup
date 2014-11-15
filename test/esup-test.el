@@ -17,8 +17,8 @@
   (declare (indent 1))
   `(with-temp-buffer
      ;; We don't want to send anything over the network
-     (flet ((esup-child-send-log (&rest args) nil)
-            (esup-child-send-result (&rest args) nil))
+     (noflet ((esup-child-send-log (&rest args) nil)
+              (esup-child-send-result (&rest args) nil))
        ;; Create buffer-file-name because esup-child collects it.
        (let ((buffer-file-name "*esup-ert-test*"))
          (insert ,str)
