@@ -381,8 +381,9 @@ Includes execution time, gc time and number of gc pauses."
 (defun esup-display-results ()
   "Display the results of the benchmarking."
   (interactive)
-  (let* ((results (esup-fontify-results
+  (let* ((all-results (esup-fontify-results
                    (esup-read-results)))
+         (results (esup-drop-insignificant-times all-results))
          (result-break (esup-propertize-string "\n" 'result-break t))
          ;; Needed since the buffer is in `view-mode'.
          (inhibit-read-only t))
