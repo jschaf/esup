@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2013 Joe Schafer
 
-;; Author: Joe Schafer <joe@jchaf.com>
+;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
