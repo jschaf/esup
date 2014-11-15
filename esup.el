@@ -467,7 +467,7 @@ Includes execution time, gc time and number of gc pauses."
   "The end point of the last read result from `esup-incoming-results-buffer'.")
 
 (defun esup-read-result (start-point)
-  "Return one `esup-result' from the current-buffer at START-POINT.
+  "Return one `esup-result' from the current buffer at START-POINT.
 Returns either an `esup-result' or nil."
   (goto-char start-point)
   (read (current-buffer)))
