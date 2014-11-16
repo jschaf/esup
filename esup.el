@@ -73,8 +73,9 @@ running `esup', set this to t.")
 (defcustom esup-insignificant-time 0.009
   "Only show expressions that take longer than this time.")
 
-(defcustom esup-server-port 8124
-  "The port for esup to communicate with the child Emacs.")
+(defcustom esup-server-port nil
+  "The port for esup to communicate with the child Emacs.
+If value is nil, Emacs selects an unused port.")
 
 (defface esup-timing-information
   '((t :inherit font-lock-type-face))
@@ -258,6 +259,11 @@ The child Emacs send data to this process on
     (goto-char (point-max))
     (insert result-str)))
 
+(defun esup-select-port ()
+  "Select a port for the esup server process."
+  ;; The value `t' instructs Emacs to pick an unused port.
+  (or esup-server-port t))
+
 (defun esup-server-create (port)
   "Create the esup parent server at localhost:PORT."
   (interactive)
@@ -331,7 +337,9 @@ The child Emacs send data to this process on
 
   (when esup-server-process
     (delete-process esup-server-process))
-  (setq esup-server-process (esup-server-create esup-server-port))
+  (setq esup-server-process (esup-server-create (esup-select-port)))
+  (setq esup-server-port (process-contact esup-server-process :service))
+  (message "esup process started on port %s" esup-server-port)
 
   (setq esup-child-process
         (start-process "*esup-child*" "*esup-child*"
