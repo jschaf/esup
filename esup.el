@@ -115,35 +115,35 @@ Includes execution time, gc time and number of gc pauses."
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (cl-loop for result in results
-        sum (oref result :exec-time) into total-exec-time
-        finally return total-exec-time))
+           sum (oref result :exec-time) into total-exec-time
+           finally return total-exec-time))
 
 (defun esup-total-gc-number (results)
   "Calculate the total number of GC pauses of RESULTS."
   (cl-loop for result in results
-        sum (oref result :gc-number) into total-gc-number
-        finally return total-gc-number))
+           sum (oref result :gc-number) into total-gc-number
+           finally return total-gc-number))
 
 (defun esup-total-gc-time (results)
   "Calculate the total time spent in GC of RESULTS."
   (cl-loop for result in results
-        sum (oref result :gc-time) into total-gc-time
-        finally return total-gc-time))
+           sum (oref result :gc-time) into total-gc-time
+           finally return total-gc-time))
 
 (defun esup-drop-insignificant-times (results)
   "Remove inconsequential entries and sort RESULTS."
-    (cl-delete-if (lambda (a) (< a esup-insignificant-time))
-                  results
-                  :key #'(lambda (obj) (oref obj :exec-time)))
-    (cl-sort results '> :key #'(lambda (obj) (oref obj :exec-time))))
+  (cl-delete-if (lambda (a) (< a esup-insignificant-time))
+                results
+                :key #'(lambda (obj) (oref obj :exec-time)))
+  (cl-sort results '> :key #'(lambda (obj) (oref obj :exec-time))))
 
 (defun esup-update-percentages (results)
   "Add the percentage of exec-time to each item in RESULTS."
   (cl-loop for result in results
-        with total-time = (esup-total-exec-time results)
-        do
-        (oset result :percentage (* 100 (/ (oref result :exec-time)
-                                           total-time)))))
+           with total-time = (esup-total-exec-time results)
+           do
+           (oset result :percentage (* 100 (/ (oref result :exec-time)
+                                              total-time)))))
 
 
 ;;; Controller - the entry points
@@ -385,7 +385,7 @@ The child Emacs send data to this process on
   "Display the results of the benchmarking."
   (interactive)
   (let* ((all-results (esup-fontify-results
-                   (esup-read-results)))
+                       (esup-read-results)))
          (results (esup-drop-insignificant-times all-results))
          (result-break (esup-propertize-string "\n" 'result-break t))
          ;; Needed since the buffer is in `view-mode'.
@@ -395,7 +395,7 @@ The child Emacs send data to this process on
       (esup-update-percentages results)
       (insert (esup-render-summary results) result-break)
       (cl-loop for result in results
-            do (insert (render result) result-break))
+               do (insert (render result) result-break))
       ;; We want the user to be at the top because it's disorienting
       ;; to start at the bottom.
       (goto-char (point-min))
@@ -453,18 +453,18 @@ The child Emacs send data to this process on
   (with-temp-buffer
     (emacs-lisp-mode)
     (cl-loop for result in results
-          do
-          (erase-buffer)
-          (insert (oref result :expression-string))
-          ;; font-lock-ensure is new to Emacs 25
-          (if (functionp 'font-lock-ensure)
-              (font-lock-ensure)
-            ;; Avoid byte-compilation errors.
-            ;; `font-lock-fontify-buffer' is marked as interactive
-            ;; only in Emacs 25.
-            (with-no-warnings
-              (font-lock-fontify-buffer)))
-          (oset result :expression-string (buffer-string)))
+             do
+             (erase-buffer)
+             (insert (oref result :expression-string))
+             ;; font-lock-ensure is new to Emacs 25
+             (if (functionp 'font-lock-ensure)
+                 (font-lock-ensure)
+               ;; Avoid byte-compilation errors.
+               ;; `font-lock-fontify-buffer' is marked as interactive
+               ;; only in Emacs 25.
+               (with-no-warnings
+                 (font-lock-fontify-buffer)))
+             (oset result :expression-string (buffer-string)))
     results))
 
 (defun esup-read-result (start-point)
