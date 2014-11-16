@@ -108,7 +108,12 @@ Includes execution time, gc time and number of gc pauses."
   "Path to the Emacs binary used for profiling.")
 
 (defvar esup-load-path
-  (file-name-directory (file-truename (buffer-file-name)))
+  ;; Emacs doesn't visit a file when loading it, meaning
+  ;; `buffer-file-name' returns nil.
+  (file-name-directory (file-truename
+                        (if load-in-progress
+                            load-file-name
+                          buffer-file-name)))
   "Full directory path to esup.el and esup-child.el.")
 
 
