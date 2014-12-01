@@ -94,5 +94,10 @@ This is known to fail."
 
       )))
 
+
+;; To test:
+;; (load custom-file) variable for file name
+;; level is incremented
+
 (provide 'esup-tests)
 ;;; esup-test.el ends here
