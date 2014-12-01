@@ -11,6 +11,7 @@
 
 (require 'esup-child)
 (require 'noflet)
+(require 'el-mock)
 
 (defmacro esup/with-mock-buffer (str &rest body)
   "Create buffer with STR and run BODY."
@@ -25,10 +26,16 @@
          (goto-char (point-min))
          ,@body))))
 
-(defmacro esup/profile-single-sexp (sexp-str)
+
+(defmacro esup/profile-sexp (sexp-str)
   "Run `esup-child-profile-sexp' on SEXP-STR and return the result."
-  `(esup/with-mock-buffer ,sexp-str
-     (car (esup-child-profile-sexp (point-min) (point-max)))))
+  `(esup/with-mock-buffer
+    ,sexp-str
+    (esup-child-profile-sexp (point-min) (point-max))))
+
+(defun esup/profile-single-sexp (sexp-str)
+  "Run `esup-child-profile-sexp' on SEXP-STR and return the first result."
+  (car (esup/profile-sexp sexp-str)))
 
 (defun esup/points-eq-p (esup-result start end)
   "Return t if ESUP-RESULT match START and END."
@@ -70,6 +77,22 @@ This is known to fail."
            (should (equal
                     (esup-child-require-to-load (read input))
                     expected))))
+
+(ert-deftest esup/profile-require-level1 ()
+  "Test that `esup-child-profile-sexp' steps into require statments."
+  (let ((esup-child-profile-require-level 1))
+    (with-mock
+      (stub esup-child-profile-file => (list 1 2))
+      (cl-loop for (input expected) in
+               '(("(require 'e)" 2))
+
+               do
+               (should (eq
+                        (length (esup/profile-sexp input))
+                        expected))
+               )
+
+      )))
 
 (provide 'esup-tests)
 ;;; esup-test.el ends here

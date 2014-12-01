@@ -76,6 +76,12 @@
                :documentation "The percentage of time taken by expression."))
   "A record of benchmarked results.")
 
+(defvar esup-child-profile-require-level 1
+  "How deep to profile (require) statements.
+0, don't step into any require statements.
+1, step into require statements in `esup-init-file'.
+n, step into up to n levels of require statements.")
+
 (defvar esup-child-parent-log-process nil
   "The network process that connects to the parent Emacs.
 We send our log information back to the parent Emacs via this
@@ -144,8 +150,9 @@ a complete result.")
     (setq str (replace-match "" t t str)))
   str)
 
-(defun esup-child-profile-file (file-name)
+(defun esup-child-profile-file (file-name &optional level)
   "Profile FILE-NAME and return the benchmarked expressions."
+  (unless level (setq level 0))
   (let ((clean-file (esup-child-chomp file-name))
         abs-file-path)
     ;; Either look up the variable or remove the quotes
@@ -164,8 +171,9 @@ a complete result.")
     (esup-child-send-log (format "loading %s" abs-file-path))
     (esup-child-profile-buffer (find-file-noselect abs-file-path))))
 
-(defun esup-child-profile-buffer (buffer)
+(defun esup-child-profile-buffer (buffer &optional level)
   "Profile BUFFER and return the benchmarked expressions."
+  (unless level (setq level 0))
   (with-current-buffer buffer
     (goto-char (point-min))
     ;; The only way to reliably figure out if we're done is to compare
@@ -190,18 +198,20 @@ a complete result.")
         (setq start (point)))
       results)))
 
-(defun esup-child-profile-sexp (start end)
+(defun esup-child-profile-sexp (start end &optional level)
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
+  (unless level (setq level 0))
   (let* ((sexp-string (buffer-substring start end))
          (sexp (if (string-equal sexp-string "")
                    ""
                  (car-safe (read-from-string sexp-string))))
          (line-number (line-number-at-pos start))
-         (benchmark (benchmark-run (eval sexp)))
          (file-name (buffer-file-name))
+         benchmark
          esup--load-file-name
          esup--profile-results)
+
     (esup-child-send-log
      "profiling sexp %s:%s %s\n" file-name line-number
      (buffer-substring-no-properties start (min end (+ 30 start))))
@@ -215,12 +225,17 @@ Returns a list of class `esup-result'."
       (setq esup--load-file-name (buffer-substring
                                   (point)
                                   (progn (forward-sexp 1) (point))))
-      (esup-child-profile-file esup--load-file-name))
+      (esup-child-profile-file esup--load-file-name (1+ level)))
+
+     ((and (<= level esup-child-profile-require-level)
+           (looking-at "(require "))
+      (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
 
      (t
       ;; Have this function always return a list of `esup-result' to
       ;; simplify processing because a loaded file will return a list
       ;; of results.
+      (setq benchmark (benchmark-run (eval sexp)))
       (setq esup--profile-results
             (list (esup-result "esup-result"
                                :file file-name
