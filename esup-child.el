@@ -234,5 +234,13 @@ Returns a list of class `esup-result'."
       (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results))))
 
+
+(defun esup-child-require-to-load (sexp)
+  "Given a require SEXP, return the corresponding file-name."
+  (let ((library (symbol-name (eval (nth 1 sexp))))
+        (filename (when (>= (length sexp) 2)
+                    (nth 2 sexp))))
+    (or filename library)))
+
 (provide 'esup-child)
 ;;; esup-child.el ends here

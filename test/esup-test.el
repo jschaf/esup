@@ -61,5 +61,15 @@ This is known to fail."
            "(progn (garbage-collect) (garbage-collect))")
           :gc-number))))
 
+(ert-deftest esup/require-to-load ()
+  "Test that `esup-child-require-to-load' works."
+  (cl-loop for (input expected) in
+           '(("(require 'a)" "a")
+             ("(require 'b \"bFilename\")" "bFilename"))
+           do
+           (should (equal
+                    (esup-child-require-to-load (read input))
+                    expected))))
+
 (provide 'esup-tests)
 ;;; esup-test.el ends here
