@@ -155,11 +155,6 @@ a complete result.")
   (unless level (setq level 0))
   (let ((clean-file (esup-child-chomp file-name))
         abs-file-path)
-    ;; Either look up the variable or remove the quotes
-    (setq clean-file
-          (or (symbol-value (intern-soft clean-file))
-              (replace-regexp-in-string "\"" "" clean-file)))
-
     (setq abs-file-path
           (locate-file clean-file load-path
                        ;; Add empty string in case the user has (load
