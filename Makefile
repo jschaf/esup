@@ -32,9 +32,6 @@ package.tar.bz2: tar
 package.zip: package
 	zip -r ${PACKAGE}.zip ${PACKAGE}
 
-blah:
-	echo ${VERSION}
-	echo ${PACKAGE}
 elpa: $(ELPA_DIR)
 $(ELPA_DIR): Cask
 	$(CASK) install
