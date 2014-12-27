@@ -7,6 +7,7 @@
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
 ;; Version:  0.5
+;; Package-Requires: ((cl-lib "0.5") (emacs "24"))
 ;; Keywords: convenience, processes
 
 ;; This file is NOT part of GNU Emacs.
