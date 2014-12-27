@@ -1,6 +1,6 @@
 ;;; esup.el --- the Emacs StartUp Profiler (ESUP) -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013 Joe Schafer
+;; Copyright (C) 2013-2015 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
