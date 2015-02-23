@@ -94,12 +94,13 @@ process.")
 
 (defun esup-child-connect-to-parent (port)
   "Connect to the parent process at PORT."
-  (open-network-stream
-   "*esup-child-connection*"
-   "*esup-child-connection*"
-   "localhost"
-   port
-   :type 'plain))
+  (let ((port-num (if (stringp port) (string-to-number port) port)))
+    (open-network-stream
+     "*esup-child-connection*"
+     "*esup-child-connection*"
+     "localhost"
+     port-num
+     :type 'plain)))
 
 (defun esup-child-init-stream (port init-message)
   "Create process on PORT, send INIT-MESSAGE, and return the process."
