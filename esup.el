@@ -325,9 +325,12 @@ The child Emacs send data to this process on
   "The end point of the last read result from `esup-incoming-results-buffer'.")
 
 ;;;###autoload
-(defun esup ()
+(defun esup (&optional init-file)
   "Profile the startup time of Emacs in the background."
-  (interactive)
+  (interactive "fUse esup to profile this file: ")
+  (unless init-file
+    (setq init-file esup-user-init-file))
+
   (message "Starting esup...")
 
   (setq esup-last-result-start-point 1)
@@ -355,7 +358,7 @@ The child Emacs send data to this process on
                        "-L" esup-load-path
                        "-l" "esup-child"
                        (format "--eval=(esup-child-run \"%s\" \"%s\")"
-                               esup-user-init-file
+                               init-file
                                esup-server-port)))
   (set-process-sentinel esup-child-process 'esup-child-process-sentinel))
 

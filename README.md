@@ -46,3 +46,8 @@ Usage
 =====
 
 To start Esup, run <kbd>M-x esup</kbd>, and watch the magic happen.
+
+## Profile a custom file with esup
+
+By default, esup will profile `user-init-file`.  To profile a custom
+file, call `esup` with a prefix argument.  That is, <kbd>C-u M-x esup</kbd>.
