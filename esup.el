@@ -327,9 +327,13 @@ The child Emacs send data to this process on
 ;;;###autoload
 (defun esup (&optional init-file)
   "Profile the startup time of Emacs in the background."
-  (interactive "fUse esup to profile this file: ")
-  (unless init-file
-    (setq init-file esup-user-init-file))
+  (interactive "P")
+  (setq init-file
+        (cond
+         ;; Universal prefix arg, so prompt
+         ((equal init-file '(4)) (read-file-name "Profile a file with esup: "))
+         ((stringp init-file) init-file)
+         (t esup-user-init-file)))
 
   (message "Starting esup...")
 
