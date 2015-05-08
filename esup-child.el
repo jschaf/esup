@@ -198,7 +198,7 @@ a complete result.")
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
   (unless level (setq level 0))
-  (let* ((sexp-string (buffer-substring start end))
+  (let* ((sexp-string (esup-child-chomp (buffer-substring start end)))
          (sexp (if (string-equal sexp-string "")
                    ""
                  (car-safe (read-from-string sexp-string))))
@@ -213,7 +213,7 @@ Returns a list of class `esup-result'."
      (buffer-substring-no-properties start (min end (+ 30 start))))
 
     (cond
-     ((string-equal (esup-child-chomp sexp-string) "")
+     ((string-equal sexp-string "")
       '())
      ;; Recursively profile loaded files.
      ((looking-at "(load ")
