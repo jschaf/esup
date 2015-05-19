@@ -154,18 +154,21 @@ a complete result.")
 (defun esup-child-profile-file (file-name &optional level)
   "Profile FILE-NAME and return the benchmarked expressions."
   (unless level (setq level 0))
-  (let ((clean-file (esup-child-chomp file-name))
-        abs-file-path)
-    (setq abs-file-path
+  (let* ((clean-file (esup-child-chomp file-name))
+         (abs-file-path
           (locate-file clean-file load-path
                        ;; Add empty string in case the user has (load
                        ;; "file.el"), otherwise we'll look for file.el.el
-                       (cons "" load-suffixes)))
-    ;; TODO: A file with no sexps (either nothing or comments) will
-    ;; cause an error.
-    (message "esup: loading %s" abs-file-path)
-    (esup-child-send-log (format "loading %s" abs-file-path))
-    (esup-child-profile-buffer (find-file-noselect abs-file-path) level)))
+                       (cons "" load-suffixes))))
+    (if abs-file-path
+        (progn
+          ;; TODO: A file with no sexps (either nothing or comments) will
+          ;; cause an error.
+          (message "esup: loading %s" abs-file-path)
+          (esup-child-send-log (format "loading %s" abs-file-path))
+          (esup-child-profile-buffer (find-file-noselect abs-file-path) level))
+      ;; The file doesn't exist, return an empty list of `esup-result'
+      '())))
 
 (defun esup-child-profile-buffer (buffer &optional level)
   "Profile BUFFER and return the benchmarked expressions."
