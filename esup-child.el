@@ -233,7 +233,8 @@ Returns a list of class `esup-result'."
       ;; of results.
       (setq benchmark (benchmark-run (eval sexp)))
       (setq esup--profile-results
-            (list (esup-result :file file-name
+            (list (esup-result "esup-result"
+                               :file file-name
                                :expression-string sexp-string
                                :start-point start :end-point end
                                :line-number line-number
