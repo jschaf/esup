@@ -210,8 +210,6 @@ Returns a list of class `esup-result'."
                  (car-safe (read-from-string sexp-string))))
          (line-number (line-number-at-pos start))
          (file-name (buffer-file-name))
-         benchmark
-         esup--load-file-name
          esup--profile-results)
 
     (esup-child-send-log
