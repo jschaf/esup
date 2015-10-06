@@ -231,22 +231,28 @@ Returns a list of class `esup-result'."
       (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
 
      (t
-      ;; Have this function always return a list of `esup-result' to
-      ;; simplify processing because a loaded file will return a list
-      ;; of results.
-      (setq benchmark (benchmark-run (eval sexp)))
       (setq esup--profile-results
-            (list (esup-result "esup-result"
-                               :file file-name
-                               :expression-string sexp-string
-                               :start-point start :end-point end
-                               :line-number line-number
-                               :exec-time (nth 0 benchmark)
-                               :gc-number (nth 1 benchmark)
-                               :gc-time (nth 2 benchmark))))
+            (list (esup-child-profile-string sexp-string file-name line-number start end)))
       (esup-child-send-result esup--profile-results)
       (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results))))
+
+(defun esup-child-profile-string (sexp-string &optional file-name line-number start-point end-point)
+  "Profile SEXP-STRING.
+Returns an `esup-reusult'."
+  (let ((sexp (if (string-equal sexp-string "")
+                  ""
+                (car-safe (read-from-string sexp-string))))
+        benchmark)
+    (setq benchmark (benchmark-run (eval sexp)))
+    (esup-result "esup-result"
+                 :file file-name
+                 :expression-string sexp-string
+                 :start-point start-point :end-point end-point
+                 :line-number line-number
+                 :exec-time (nth 0 benchmark)
+                 :gc-number (nth 1 benchmark)
+                 :gc-time (nth 2 benchmark))))
 
 
 (defun esup-child-require-to-load (sexp)
