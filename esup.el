@@ -352,12 +352,9 @@ The child Emacs send data to this process on
   (setq esup-child-process
         (start-process "*esup-child*" "*esup-child*"
                        esup-emacs-path
-                       ;; The option -q is combined with --batch
-                       ;; because this `start-process' errors if we
-                       ;; pass either an empty string or nil
                        (if esup-run-as-batch-p
-                           "-q --batch"
-                         "-q")
+                           "--batch")
+                       "-q"
                        "--debug-init"
                        "-L" esup-load-path
                        "-l" "esup-child"
