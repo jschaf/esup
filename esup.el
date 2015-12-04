@@ -356,21 +356,23 @@ The child Emacs send data to this process on
   (setq esup-server-port (process-contact esup-server-process :service))
   (message "esup process started on port %s" esup-server-port)
 
-  (setq esup-child-process
-        (start-process "*esup-child*" "*esup-child*"
-                       esup-emacs-path
-                       ;; The option -q is combined with --batch
-                       ;; because this `start-process' errors if we
-                       ;; pass either an empty string or nil
-                       (if esup-run-as-batch-p
-                           "-q --batch"
-                         "-q")
-                       "--debug-init"
-                       "-L" esup-load-path
-                       "-l" "esup-child"
-                       (format "--eval=(esup-child-run \"%s\" \"%s\")"
-                               init-file
-                               esup-server-port)))
+  (let ((process-args `("*esup-child*"
+                        "*esup-child*"
+                        ,esup-emacs-path
+                        "--debug-init"
+                        "-q"
+                        "-L" ,esup-load-path
+                        "-l" "esup-child"
+                        ,(format "--eval=(esup-child-run \"%s\" \"%s\")"
+                                 init-file
+                                 esup-server-port))))
+
+    ;; The option -q is set by itself because this `start-process' errors if we
+    ;; pass either an empty string or nil
+    (when esup-run-as-batch-p
+      (setq process-args (append process-args '("--batch"))))
+    (setq esup-child-process (apply #'start-process process-args)))
+
   (set-process-sentinel esup-child-process 'esup-child-process-sentinel))
 
 (defun esup-follow-link (pos)
