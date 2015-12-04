@@ -48,7 +48,14 @@
 ;; We need `esup-result'
 (require 'esup-child)
 
-(require 'cl-lib)
+
+;; On Emacs 24.3 and below, the `with-slots' macro expands to `symbol-macrolet'
+;; instead of `cl-symbol-macrolet'
+(eval-when-compile
+  (if (and (<= emacs-major-version 24)
+           (<= emacs-minor-version 3))
+      (require 'cl)
+    (require 'cl-lib)))
 
 ;;; Code:
 
