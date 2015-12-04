@@ -27,7 +27,7 @@
 ;; Place esup.el on your `load-path' by adding this to your
 ;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
 ;;
-;; add-to-list 'load-path "~/dir/to-esup")
+;; (add-to-list 'load-path "~/dir/to-esup")
 ;;
 ;; Load the code:
 ;;
