@@ -174,7 +174,7 @@ Includes execution time, gc time and number of gc pauses."
       (message "Not at a file."))))
 
 (define-derived-mode esup-mode
-  special-mode "esup"
+    special-mode "esup"
   (font-lock-mode 1))
 
 (define-key esup-mode-map (kbd "<return>") 'esup-visit-item)
