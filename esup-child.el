@@ -3,7 +3,7 @@
 ;; Copyright (C) 2014-15 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
-;; Version: 0.1
+;; Version: 0.4
 ;; Keywords:  convenience
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -152,7 +152,8 @@ a complete result.")
   str)
 
 (defun esup-child-profile-file (file-name &optional level)
-  "Profile FILE-NAME and return the benchmarked expressions."
+  "Profile FILE-NAME and return the benchmarked expressions.
+LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
   (let* ((clean-file (esup-child-chomp file-name))
          (abs-file-path
@@ -176,7 +177,8 @@ a complete result.")
     (goto-char (+ (match-end 0) (string-to-number (match-string 1))))))
 
 (defun esup-child-profile-buffer (buffer &optional level)
-  "Profile BUFFER and return the benchmarked expressions."
+  "Profile BUFFER and return the benchmarked expressions.
+LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
   (with-current-buffer buffer
     (goto-char (point-min))
@@ -202,7 +204,8 @@ a complete result.")
 
 (defun esup-child-profile-sexp (start end &optional level)
   "Profile the sexp between START and END in the current buffer.
-Returns a list of class `esup-result'."
+Returns a list of class `esup-result'.
+LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
   (let* ((sexp-string (esup-child-chomp (buffer-substring start end)))
          (sexp (if (string-equal sexp-string "")
@@ -235,9 +238,14 @@ Returns a list of class `esup-result'."
       (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results))))
 
-(defun esup-child-profile-string (sexp-string &optional file-name line-number start-point end-point)
+(defun esup-child-profile-string (sexp-string
+                                  &optional file-name line-number
+                                  start-point end-point)
   "Profile SEXP-STRING.
-Returns an `esup-reusult'."
+Returns an `esup-reusult'.  FILE-NAME is the file the string was
+`eval'ed in.  LINE-NUMBER is the line number of SEXP-STRING.
+START-POINT and END-POINT are the points at which SEXP-STRING
+appears in FILE-NAME."
   (let ((sexp (if (string-equal sexp-string "")
                   ""
                 (car-safe (read-from-string sexp-string))))
