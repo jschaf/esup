@@ -192,7 +192,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
           results)
 
       (while (> start last-start)
-        (setq results (append results (esup-child-profile-sexp start end level)))
+        (setq results (append results
+                              (esup-child-profile-sexp start end level)))
         (setq last-start start)
         (goto-char end)
         (esup-child-skip-byte-code-dynamic-docstrings)
@@ -233,7 +234,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
 
      (t
       (setq esup--profile-results
-            (list (esup-child-profile-string sexp-string file-name line-number start end)))
+            (list (esup-child-profile-string
+                   sexp-string file-name line-number start end)))
       (esup-child-send-result esup--profile-results)
       (esup-child-send-result esup-child-result-separator 'no-serialize)
       esup--profile-results))))
