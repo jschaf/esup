@@ -229,7 +229,9 @@ LEVEL is the number of `load's or `require's we've stepped into."
       (esup-child-profile-file (eval (nth 1 sexp)) (1+ level)))
 
      ((and (< level esup-child-profile-require-level)
-           (looking-at "(require "))
+           (looking-at "(require ")
+           ;; TODO: Check if we're loading a byte-compiled file
+           )
       (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
 
      (t
@@ -262,6 +264,16 @@ SEXP-STRING appears in FILE-NAME."
                  :gc-number (nth 1 benchmark)
                  :gc-time (nth 2 benchmark))))
 
+(defun esup-child-file-to-load-is-elc (feature)
+  "Return non-nil if FEATURE will be loaded from an .elc file."
+  (let* ((file-full-load-path
+         (locate-file (symbol-name feature) load-path (get-load-suffixes)))
+        (suffix (file-name-extension file-full-load-path)))
+    (or (equal suffix "elc")
+        ;; `file-name-extension' only returns the final extension, so we only
+        ;; get .gz on a file like file.elc.gz
+        (string-match-p ".*?\\.elc\\.gz"
+                        file-full-load-path))))
 
 (defun esup-child-require-to-load (sexp)
   "Given a require SEXP, return the corresponding file-name."
