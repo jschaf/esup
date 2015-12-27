@@ -244,10 +244,10 @@ LEVEL is the number of `load's or `require's we've stepped into."
                                   &optional file-name line-number
                                   start-point end-point)
   "Profile SEXP-STRING.
-Returns an `esup-reusult'.  FILE-NAME is the file the string was
-`eval'ed in.  LINE-NUMBER is the line number of SEXP-STRING.
-START-POINT and END-POINT are the points at which SEXP-STRING
-appears in FILE-NAME."
+Returns an `esup-reusult'.  FILE-NAME is the file that
+SEXP-STRING was `eval'ed in.  LINE-NUMBER is the line number of
+the string.  START-POINT and END-POINT are the points at which
+SEXP-STRING appears in FILE-NAME."
   (let ((sexp (if (string-equal sexp-string "")
                   ""
                 (car-safe (read-from-string sexp-string))))
