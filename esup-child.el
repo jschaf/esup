@@ -228,11 +228,23 @@ LEVEL is the number of `load's or `require's we've stepped into."
       (goto-char (match-end 0))
       (esup-child-profile-file (eval (nth 1 sexp)) (1+ level)))
 
+     ;; We have a require sexp
      ((and (< level esup-child-profile-require-level)
            (looking-at "(require ")
-           ;; TODO: Check if we're loading a byte-compiled file
            )
-      (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
+
+      (let ((feature (esup-child-get-require-feature sexp))
+            (load-file-name (esup-child-require-to-load sexp)))
+        ;; TODO: Check if we're loading a byte-compiled file
+        (if (esup-child-file-to-load-is-elc feature)
+            (progn
+              (setq esup--profile-results
+                    (list (esup-child-profile-string
+                           sexp-string file-name line-number start end)))
+              (esup-child-send-result esup--profile-results)
+              (esup-child-send-result esup-child-result-separator 'no-serialize)
+              esup--profile-results)
+          (esup-child-profile-file load-file-name (1+ level)))))
 
      (t
       (setq esup--profile-results
@@ -274,6 +286,11 @@ appears in FILE-NAME."
         ;; get .gz on a file like file.elc.gz
         (string-match-p ".*?\\.elc\\.gz"
                         file-full-load-path))))
+
+(defun esup-child-get-require-feature (sexp)
+  "Given a require SEXP, return the corresponding feature."
+  ;; TODO: doesn't handle the case where we use a filename
+  (nth 1 sexp))
 
 (defun esup-child-require-to-load (sexp)
   "Given a require SEXP, return the corresponding file-name."
