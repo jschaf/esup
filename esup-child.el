@@ -246,10 +246,10 @@ LEVEL is the number of `load's or `require's we've stepped into."
                                   &optional file-name line-number
                                   start-point end-point)
   "Profile SEXP-STRING.
-Returns an `esup-reusult'.  FILE-NAME is the file that
-SEXP-STRING was `eval'ed in.  LINE-NUMBER is the line number of
-the string.  START-POINT and END-POINT are the points at which
-SEXP-STRING appears in FILE-NAME."
+Returns an `esup-result'.  FILE-NAME is the file that SEXP-STRING
+was `eval'ed in.  LINE-NUMBER is the line number of the string.
+START-POINT and END-POINT are the points at which SEXP-STRING
+appears in FILE-NAME."
   (let ((sexp (if (string-equal sexp-string "")
                   ""
                 (car-safe (read-from-string sexp-string))))
@@ -265,7 +265,7 @@ SEXP-STRING appears in FILE-NAME."
                  :gc-time (nth 2 benchmark))))
 
 (defun esup-child-file-to-load-is-elc (feature)
-  "Return non-nil if FEATURE will be loaded from an .elc file."
+  "Return t if FEATURE will be loaded from an .elc file."
   (let* ((file-full-load-path
          (locate-file (symbol-name feature) load-path (get-load-suffixes)))
         (suffix (file-name-extension file-full-load-path)))
