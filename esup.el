@@ -359,7 +359,6 @@ The child Emacs send data to this process on
   (let ((process-args `("*esup-child*"
                         "*esup-child*"
                         ,esup-emacs-path
-                        "--debug-init"
                         "-q"
                         "-L" ,esup-load-path
                         "-l" "esup-child"
