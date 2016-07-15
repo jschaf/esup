@@ -138,7 +138,6 @@ a complete result.")
   (setq esup-child-parent-results-process
         (esup-child-init-stream port "RESULTSSTREAM"))
 
-  (toggle-debug-on-error)
   (setq enable-local-variables :safe)
   (prog1
       (esup-child-profile-file init-file 0)
