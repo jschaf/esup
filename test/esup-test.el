@@ -85,14 +85,10 @@ This is known to fail."
       (stub esup-child-profile-file => (list 1 2))
       (cl-loop for (input expected) in
                '(("(require 'e)" 2))
-
                do
                (should (eq
                         (length (esup/profile-sexp input))
-                        expected))
-               )
-
-      )))
+                        expected))))))
 
 
 ;; To test:
