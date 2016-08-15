@@ -187,22 +187,18 @@ LEVEL is the number of `load's or `require's we've stepped into."
       (with-current-buffer buffer
         (goto-char (point-min))
         (forward-comment (buffer-size))
+        (esup-child-skip-byte-code-dynamic-docstrings)
         ;; The only way to reliably figure out if we're done is to compare
         ;; sexp positions.  `forward-sexp' handles all the complexities of
         ;; white-space and comments.
         (let ((buffer-read-only t)
               (last-start -1)
               (end (progn (forward-sexp 1)
-                          (esup-child-send-log "forward-sexp is %d\n" (point))
                           (point)))
               (start (progn (forward-sexp -1)
-                            (esup-child-send-log "backward-sexp is %d\n" (point))
                             (point)))
               results)
-          (esup-child-send-log "Starting loop from %d-%d\n" start end)
-
           (while (> start last-start)
-            (esup-child-send-log "in buffer looking at points %d-%d\n" start end)
             (setq results (append results
                                   (esup-child-profile-sexp start end level)))
             (setq last-start start)
