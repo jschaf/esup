@@ -123,6 +123,10 @@ If NO-SERIALIZE is non-nil then don't serialize RESULT with
                            result
                          (prin1-to-string result))))
 
+(defun esup-child-send-eof ()
+  "Make process see end-of-file in its input."
+  (process-send-eof esup-child-parent-log-process))
+
 (defvar esup-child-result-separator "\n;;ESUP-RESULT-SEPARATOR;;\n"
   "The separator between results.
 The parent Emacs uses the separator to know when the child has
