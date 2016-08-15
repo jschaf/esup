@@ -229,6 +229,7 @@ LEVEL is the number of `load's or `require's we've stepped into."
 
      ((and (< level esup-child-profile-require-level)
            (looking-at "(require "))
+      ;; TODO: See if symbol already provided.  #38
       (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
 
      (t
