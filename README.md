@@ -51,3 +51,43 @@ To start Esup, run <kbd>M-x esup</kbd>, and watch the magic happen.
 
 By default, esup will profile `user-init-file`.  To profile a custom
 file, call `esup` with a prefix argument.  That is, <kbd>C-u M-x esup</kbd>.
+
+
+Developing
+==========
+
+Patches are always welcome.  To submit a patch, use something like the following
+workflow.
+
+``` sh
+git clone https://github.com/jschaf/esup.git
+cd esup
+git checkout -b MY-NEW-FIX
+```
+
+Implement your fix.  Please use [angular-style commit messages](https://github.com/angular/angular.js/blob/master/CONTRIBUTING.md#-git-commit-guidelines).
+
+Ensure that all elisp code is lint-clean with flycheck.
+
+Test your fix with [Cask](https://github.com/cask/cask).  You can install cask with:
+
+``` sh
+curl -fsSL https://raw.githubusercontent.com/cask/cask/master/go | python
+export PATH="/home/joe/.cask/bin:$PATH"
+
+```
+
+Test your fixes with the Emacs Regression Test runner.
+
+
+```
+cask exec ert-runner
+```
+
+Send your commits for review.
+
+```
+git push origin MY-NEW-FIX
+```
+
+Create a pull request with the normal Github user interface.
