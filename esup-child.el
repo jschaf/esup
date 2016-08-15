@@ -165,7 +165,7 @@ LEVEL is the number of `load's or `require's we've stepped into."
           ;; TODO: A file with no sexps (either nothing or comments) will
           ;; cause an error.
           (message "esup: loading %s" abs-file-path)
-          (esup-child-send-log (format "loading %s" abs-file-path))
+          (esup-child-send-log (format "loading %s\n" abs-file-path))
           (esup-child-profile-buffer (find-file-noselect abs-file-path) level))
       ;; The file doesn't exist, return an empty list of `esup-result'
       '())))
@@ -208,16 +208,19 @@ Returns a list of class `esup-result'.
 LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
   (let* ((sexp-string (esup-child-chomp (buffer-substring start end)))
-         (sexp (if (string-equal sexp-string "")
-                   ""
-                 (car-safe (read-from-string sexp-string))))
          (line-number (line-number-at-pos start))
          (file-name (buffer-file-name))
+         sexp
          esup--profile-results)
 
     (esup-child-send-log
-     "profiling sexp %s:%s %s\n" file-name line-number
+     "profiling sexp %s:%s:%d-%d: %s\n"
+     file-name line-number start end
      (buffer-substring-no-properties start (min end (+ 30 start))))
+
+    (setq sexp (if (string-equal sexp-string "")
+         ""
+       (car-safe (read-from-string sexp-string))))
 
     (cond
      ((string-equal sexp-string "")
