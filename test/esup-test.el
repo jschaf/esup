@@ -90,6 +90,13 @@ This is known to fail."
                         (length (esup/profile-sexp input))
                         expected))))))
 
+(ert-deftest esup/profile-leading-dynamic-docstring ()
+  "Test that `esup-child-profile-buffer' handles dynamic docstrings."
+  ;; If it doesn't error, we're good.
+  (esup/with-mock-buffer
+   "#@2 A\n(defvar var 1)"
+   (esup-child-profile-buffer (current-buffer))))
+
 
 ;; To test:
 ;; (load custom-file) variable for file name
