@@ -47,6 +47,7 @@
 ;; `esup' will step into `require' and `load' forms at the top level of a file,
 ;; but not if they're enclosed in any other statement.
 
+(require 'eieio)
 
 ;; We need `esup-result'
 (require 'esup-child)
