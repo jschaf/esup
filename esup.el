@@ -1,6 +1,6 @@
 ;;; esup.el --- the Emacs StartUp Profiler (ESUP) -*- lexical-binding: t -*-
 
-;; Copyright (C) 2013-2015 Joe Schafer
+;; Copyright (C) 2016 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
@@ -39,10 +39,13 @@
 ;;
 ;; The most recent code is always at http://github.com/jschaf/esup
 ;;
-;; esup profiles your Emacs startup time by examining all top-level
-;; S-expressions (sexps).  esup starts a new Emacs process from Emacs
-;; to profile each SEXP.  After the profiled Emacs is complete, it
-;; will exit and your Emacs will display the results.
+;; `esup' profiles your Emacs startup time by examining all top-level
+;; S-expressions (sexps).  `esup' starts a new Emacs process from Emacs to
+;; profile each SEXP.  After the profiled Emacs is complete, it will exit and
+;; your Emacs will display the results.
+;;
+;; `esup' will step into `require' and `load' forms at the top level of a file,
+;; but not if they're enclosed in any other statement.
 
 
 ;; We need `esup-result'
@@ -50,7 +53,7 @@
 
 
 ;; On Emacs 24.3 and below, the `with-slots' macro expands to `symbol-macrolet'
-;; instead of `cl-symbol-macrolet'
+;; instead of `cl-symbol-macrolet'.
 (eval-when-compile
   (if (and (<= emacs-major-version 24)
            (<= emacs-minor-version 3))
@@ -69,21 +72,29 @@
   :group 'languages)
 
 (defcustom esup-user-init-file user-init-file
-  "The user init files to profile.")
+  "The user init files to profile."
+  :group 'esup
+  :type 'string)
 
 (defcustom esup-run-as-batch-p nil
   "If non-nil, run the profiled Emacs as batch.
 This option is off by default because batch runs faster than
 regular Emacs, so the timing information is not as realistic.  If
 you don't want to the benchmarked Emacs frame to appear when
-running `esup', set this to t.")
+running `esup', set this to t."
+  :group 'esup
+  :type 'boolean)
 
 (defcustom esup-insignificant-time 0.009
-  "Only show expressions that take longer than this time.")
+  "Only show expressions that take longer than this time."
+  :group 'esup
+  :type 'float)
 
 (defcustom esup-server-port nil
   "The port for esup to communicate with the child Emacs.
-If value is nil, Emacs selects an unused port.")
+If value is nil, Emacs selects an unused port."
+  :group 'esup
+  :type 'integer)
 
 (defface esup-timing-information
   '((t :inherit font-lock-type-face))
@@ -160,7 +171,7 @@ Includes execution time, gc time and number of gc pauses."
                                               total-time)))))
 
 
-;;; Controller - the entry points
+;;; Controller - the entry points.
 
 (defun esup-visit-item ()
   "Visit current item."
@@ -222,7 +233,7 @@ Includes execution time, gc time and number of gc pauses."
                                                         'result-break))
       (if prev-point
           (setq arg (1- arg))
-        ;; break out of the loop because we couldn't find a previous
+        ;; Break out of the loop because we couldn't find a previous
         ;; text-property of result-break, so we're at the beginning of
         ;; the buffer.
         (setq arg 0)
@@ -268,7 +279,9 @@ The child Emacs send data to this process on
     (insert result-str)))
 
 (defun esup-select-port ()
-  "Select a port for the esup server process."
+  "Select a port for the esup server process.
+If `esup-server-port' is nil, then let the OS select an unused
+port."
   ;; The value `t' instructs Emacs to pick an unused port.
   (or esup-server-port t))
 
@@ -293,6 +306,10 @@ The child Emacs send data to this process on
    :log 'esup--server-logger))
 
 (defun esup--server-filter (proc string)
+  "Filter log and result entries recieved at the parent process.
+PROC is the process and STRING is the message.  `esup-child'
+starts messages with LOGSTREAM or RESULTSSTREAM to indicate the
+type of message."
   (cond
    ((string-prefix-p "LOGSTREAM" string)
     (setq esup-child-log-port (process-contact proc :service))
@@ -322,10 +339,13 @@ The child Emacs send data to this process on
     (error "Recieved unknown message type"))))
 
 (defun esup--server-sentinel (proc event)
+  "Listen for PROC EVENTs."
   (esup-server-log "name: %s, sentinel: proc: %s, event %s"
                    (process-name proc) proc event))
 
 (defun esup--server-logger (server connection message)
+  "Log adapter for `make-network-process'.
+Provides a useful default for SERVER, CONNECTION and MESSAGE."
   (esup-server-log "logged: server %s, connection %s, message %s"
                    server connection message))
 
@@ -334,7 +354,8 @@ The child Emacs send data to this process on
 
 ;;;###autoload
 (defun esup (&optional init-file)
-  "Profile the startup time of Emacs in the background."
+  "Profile the startup time of Emacs in the background.
+If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
   (interactive "P")
   (setq init-file
         (cond
@@ -368,7 +389,7 @@ The child Emacs send data to this process on
                                  esup-server-port))))
 
     ;; The option -q is set by itself because this `start-process' errors if we
-    ;; pass either an empty string or nil
+    ;; pass either an empty string or nil as an argument.
     (when esup-run-as-batch-p
       (setq process-args (append process-args '("--batch"))))
     (setq esup-child-process (apply #'start-process process-args)))
@@ -384,7 +405,7 @@ The child Emacs send data to this process on
     (goto-char start-point)))
 
 
-;;; Utilities
+;;; Utilities.
 
 (defsubst esup-propertize-string (str &rest properties)
   "Replace all properties of STR with PROPERTIES."
@@ -396,7 +417,7 @@ The child Emacs send data to this process on
   (esup-propertize-string str 'font-lock-face face))
 
 
-;;; View - rendering functions
+;;; View - rendering functions.
 
 (defvar esup-display-buffer "*esup*"
   "The buffer in which to display benchmark results.")
