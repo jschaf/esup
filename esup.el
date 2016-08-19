@@ -49,8 +49,19 @@
 
 (require 'eieio)
 
-;; We need `esup-result'
-(require 'esup-child)
+(defvar esup-load-path
+  ;; Emacs doesn't visit a file when loading it, meaning
+  ;; `buffer-file-name' returns nil.
+  (file-name-directory (file-truename
+                        (if load-in-progress
+                            load-file-name
+                          buffer-file-name)))
+  "Full directory path to esup.el and esup-child.el.")
+
+;; We need to load esup-child to access `esup-result'.  `esup-child' may not be
+;; on the path, so lets add it here.
+(let ((load-path (append load-path (list esup-load-path))))
+  (require 'esup-child))
 
 
 ;; On Emacs 24.3 and below, the `with-slots' macro expands to `symbol-macrolet'
@@ -127,15 +138,6 @@ Includes execution time, gc time and number of gc pauses."
 
 (defvar esup-emacs-path (concat invocation-directory invocation-name)
   "Path to the Emacs binary used for profiling.")
-
-(defvar esup-load-path
-  ;; Emacs doesn't visit a file when loading it, meaning
-  ;; `buffer-file-name' returns nil.
-  (file-name-directory (file-truename
-                        (if load-in-progress
-                            load-file-name
-                          buffer-file-name)))
-  "Full directory path to esup.el and esup-child.el.")
 
 
 (defun esup-total-exec-time (results)
