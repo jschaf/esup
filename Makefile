@@ -35,4 +35,3 @@ package.zip: package
 elpa: $(ELPA_DIR)
 $(ELPA_DIR): Cask
 	$(CASK) install
-	touch $@
