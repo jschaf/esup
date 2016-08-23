@@ -7,7 +7,7 @@ CASK ?= cask
 ELPA_DIR = \
 	.cask/$(shell $(EMACS) -Q --batch --eval '(princ emacs-version)')/elpa
 
-test: elpa
+test: 
 	$(CASK) exec ert-runner
 
 byte-compile: elpa
