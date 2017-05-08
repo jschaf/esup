@@ -1,9 +1,9 @@
 ;;; esup-child.el --- lisp file for child Emacs to run. -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-15 Joe Schafer
+;; Copyright (C) 2014-2017 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
-;; Version: 0.4
+;; Version: 0.5
 ;; Keywords:  convenience
 
 ;; This program is free software; you can redistribute it and/or modify
