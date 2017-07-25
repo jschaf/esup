@@ -92,6 +92,13 @@ network process.")
 We send our results back to the parent Emacs via this network
 process.")
 
+(defvar esup-child-result-separator "\n;;ESUP-RESULT-SEPARATOR;;\n"
+  "The separator between results.
+The parent Emacs uses the separator to know when the child has
+sent a full result.  Emacs accepts network input only when it's
+not busy and in bunches of about 500 bytes.  So, we might not get
+a complete result.")
+
 (defun esup-child-connect-to-parent (port)
   "Connect to the parent process at PORT."
   (let ((port-num (if (stringp port) (string-to-number port) port)))
@@ -127,13 +134,6 @@ process.")
 (defun esup-child-send-eof ()
   "Make process see end-of-file in its input."
   (process-send-eof esup-child-parent-log-process))
-
-(defvar esup-child-result-separator "\n;;ESUP-RESULT-SEPARATOR;;\n"
-  "The separator between results.
-The parent Emacs uses the separator to know when the child has
-sent a full result.  Emacs accepts network input only when it's
-not busy and in bunches of about 500 bytes.  So, we might not get
-a complete result.")
 
 (defun esup-child-log-invocation-options ()
   "Log the invocation options that esup-child was started with."
