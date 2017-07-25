@@ -114,14 +114,15 @@ process.")
   (process-send-string esup-child-parent-log-process
                        (apply 'format (concat "LOG: " format-str) args)))
 
-(defun esup-child-send-result (result &optional no-serialize)
-  "Send RESULT to the parent process.
-If NO-SERIALIZE is non-nil then don't serialize RESULT with
-`prin1-to-string'."
+(defun esup-child-send-result-separator ()
+  "Send the result separator to the parent process."
   (process-send-string esup-child-parent-results-process
-                       (if no-serialize
-                           result
-                         (prin1-to-string result))))
+                       esup-child-result-separator))
+
+(defun esup-child-send-result (results)
+  "Send RESULTS to the parent process."
+  (process-send-string esup-child-parent-results-process
+                       (prin1-to-string results)))
 
 (defun esup-child-send-eof ()
   "Make process see end-of-file in its input."
@@ -260,7 +261,7 @@ LEVEL is the number of `load's or `require's we've stepped into."
                   (list (esup-child-profile-string
                          sexp-string file-name line-number start end)))
             (esup-child-send-result esup--profile-results)
-            (esup-child-send-result esup-child-result-separator 'no-serialize)
+            (esup-child-send-result-separator)
             esup--profile-results)))
       (error
        (message "ERROR: %s" error-message)
