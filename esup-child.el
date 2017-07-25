@@ -134,15 +134,20 @@ sent a full result.  Emacs accepts network input only when it's
 not busy and in bunches of about 500 bytes.  So, we might not get
 a complete result.")
 
+(defun esup-child-log-invocation-options ()
+  "Log the invocation options that esup-child was started with."
+  (let ((invocation-binary (concat invocation-directory invocation-name)))
+    (esup-child-send-log "binary: %s\n" invocation-binary)))
+
 (defun esup-child-run (init-file port)
   "Profile INIT-FILE and send results to localhost:PORT."
-
   (setq esup-child-parent-log-process
         (esup-child-init-stream port "LOGSTREAM"))
   (setq esup-child-parent-results-process
         (esup-child-init-stream port "RESULTSSTREAM"))
 
   (setq enable-local-variables :safe)
+  (esup-child-log-invocation-options)
   (prog1
       (esup-child-profile-file init-file 0)
     (kill-emacs)))
