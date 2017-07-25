@@ -198,10 +198,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
         ;; white-space and comments.
         (let ((buffer-read-only t)
               (last-start -1)
-              (end (progn (forward-sexp 1)
-                          (point)))
-              (start (progn (forward-sexp -1)
-                            (point)))
+              (end (progn (forward-sexp 1) (point)))
+              (start (progn (forward-sexp -1) (point)))
               results
               (after-init-time nil))
           (while (> start last-start)
@@ -254,7 +252,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
            ((and (< level esup-child-profile-require-level)
                  (looking-at "(require "))
             ;; TODO: See if symbol already provided.  #38
-            (esup-child-profile-file (esup-child-require-to-load sexp) (1+ level)))
+            (esup-child-profile-file (esup-child-require-to-load sexp)
+                                     (1+ level)))
 
            (t
             (setq esup--profile-results
