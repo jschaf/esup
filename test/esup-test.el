@@ -31,8 +31,8 @@
 (defmacro esup/profile-sexp (sexp-str)
   "Run `esup-child-profile-sexp' on SEXP-STR and return the result."
   `(esup/with-mock-buffer
-    ,sexp-str
-    (esup-child-profile-sexp (point-min) (point-max))))
+       ,sexp-str
+     (esup-child-profile-sexp (point-min) (point-max))))
 
 (defun esup/profile-single-sexp (sexp-str)
   "Run `esup-child-profile-sexp' on SEXP-STR and return the first result."
@@ -46,11 +46,11 @@
 (ert-deftest esup/start-end ()
   "Test that `esup-child-profile-sexp' has the right start and end points."
   (loop for (input start end) in
-           '(("()" 1 3)
-             ("'(1)" 1 5))
-           do
-           (should (esup/points-eq-p (esup/profile-single-sexp input)
-                                     start end))))
+        '(("()" 1 3)
+          ("'(1)" 1 5))
+        do
+        (should (esup/points-eq-p (esup/profile-single-sexp input)
+                                  start end))))
 
 (ert-deftest esup/empty-file ()
   "Test `esup-profile-sexp' with an empty string.
@@ -61,13 +61,13 @@ This is known to fail."
     (should t)))
 
 (ert-deftest esup/garbage-collections ()
-    "Test that we count garbage collection properly."
-    (should
-     (eq 2
-         (oref
-          (esup/profile-single-sexp
-           "(progn (garbage-collect) (garbage-collect))")
-          :gc-number))))
+  "Test that we count garbage collection properly."
+  (should
+   (eq 2
+       (oref
+        (esup/profile-single-sexp
+         "(progn (garbage-collect) (garbage-collect))")
+        :gc-number))))
 
 (ert-deftest esup/require-to-load ()
   "Test that `esup-child-require-to-load' works."
@@ -83,20 +83,20 @@ This is known to fail."
   "Test that `esup-child-profile-sexp' steps into require statments."
   (let ((esup-child-profile-require-level 1))
     (with-mock
-      (stub esup-child-profile-file => (list 1 2))
-      (cl-loop for (input expected) in
-               '(("(require 'e)" 2))
-               do
-               (should (eq
-                        (length (esup/profile-sexp input))
-                        expected))))))
+     (stub esup-child-profile-file => (list 1 2))
+     (cl-loop for (input expected) in
+              '(("(require 'e)" 2))
+              do
+              (should (eq
+                       (length (esup/profile-sexp input))
+                       expected))))))
 
 (ert-deftest esup/profile-leading-dynamic-docstring ()
   "Test that `esup-child-profile-buffer' handles dynamic docstrings."
   ;; If it doesn't error, we're good.
   (esup/with-mock-buffer
-   "#@2 A\n(defvar var 1)"
-   (esup-child-profile-buffer (current-buffer))))
+      "#@2 A\n(defvar var 1)"
+    (esup-child-profile-buffer (current-buffer))))
 
 
 ;; To test:
