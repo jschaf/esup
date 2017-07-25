@@ -13,20 +13,57 @@
 (require 'noflet)
 (require 'el-mock)
 
+(defun esup/stub-init-stream (port init-message)
+  (let ((buffer (get-buffer-create (format "esup-test-%s" init-message))))
+    (with-current-buffer buffer
+      (erase-buffer)
+      (insert init-message "\n"))
+    buffer))
+
+(defvar esup/logstream-buffer "esup-test-LOGSTREAM")
+(defvar esup/results-buffer "esup-test-RESULTSSTREAM")
+
+(defun esup/stub-process-send-string (process string)
+  (with-current-buffer (get-buffer process)
+    (goto-char (point-max))
+    (insert string)))
+
+(defun esup/stub-process-send-eof (process)
+  (with-current-buffer (get-buffer process)
+    (goto-char (point-max))
+    (insert "\n<EOF>")))
+
+
 (defmacro esup/with-mock-buffer (str &rest body)
   "Create buffer with STR and run BODY."
   (declare (indent 1))
   `(with-temp-buffer
      ;; We don't want to send anything over the network
-     (noflet ((esup-child-send-log (&rest args) nil)
-              (esup-child-send-result-separator (&rest args) nil)
-              (esup-child-send-result (&rest args) nil))
+     (noflet (
+              (esup-child-init-stream
+               (port init-message)
+               (esup/stub-init-stream port init-message))
+
+              (process-send-string
+               (process string)
+               (esup/stub-process-send-string
+                process string))
+
+              (process-send-eof (process)
+                                (esup/stub-process-send-eof process)))
        ;; Create buffer-file-name because esup-child collects it.
+       (esup-child-init-streams 6666)
        (let ((buffer-file-name "*esup-ert-test*"))
          (insert ,str)
          (goto-char (point-min))
          ,@body))))
 
+;; Use a macro so ERT expands needle and the buffer contents.
+(defmacro esup/buffer-contains-p (buffer needle)
+  `(s-contains-p
+    ,needle
+    (with-current-buffer ,buffer
+      (buffer-substring (point-min) (point-max)))))
 
 (defmacro esup/profile-sexp (sexp-str)
   "Run `esup-child-profile-sexp' on SEXP-STR and return the result."
@@ -51,6 +88,15 @@
         do
         (should (esup/points-eq-p (esup/profile-single-sexp input)
                                   start end))))
+
+(ert-deftest esup/logs-profiling-info ()
+  "Test `esup-child-profile-sexp' sends logging info."
+  (let ((result
+         (esup/with-mock-buffer ""
+           (esup-child-profile-sexp (point-min) (point-max)))))
+    (should (esup/buffer-contains-p
+             esup/logstream-buffer
+             "LOG: profiling sexp *esup-ert-test*:1 1-1"))))
 
 (ert-deftest esup/empty-file ()
   "Test `esup-profile-sexp' with an empty string.

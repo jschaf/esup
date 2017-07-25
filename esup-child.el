@@ -140,13 +140,16 @@ a complete result.")
   (let ((invocation-binary (concat invocation-directory invocation-name)))
     (esup-child-send-log "binary: %s\n" invocation-binary)))
 
-(defun esup-child-run (init-file port)
-  "Profile INIT-FILE and send results to localhost:PORT."
+(defun esup-child-init-streams (port)
+  "Initialize the streams for logging and results on PORT."
   (setq esup-child-parent-log-process
         (esup-child-init-stream port "LOGSTREAM"))
   (setq esup-child-parent-results-process
-        (esup-child-init-stream port "RESULTSSTREAM"))
+        (esup-child-init-stream port "RESULTSSTREAM")))
 
+(defun esup-child-run (init-file port)
+  "Profile INIT-FILE and send results to localhost:PORT."
+  (esup-child-init-streams port)
   (setq enable-local-variables :safe)
   (esup-child-log-invocation-options)
   (prog1
