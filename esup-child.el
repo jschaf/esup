@@ -1,5 +1,4 @@
 ;;; esup-child.el --- lisp file for child Emacs to run. -*- lexical-binding: t -*-
-
 ;; Copyright (C) 2014-2017 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
@@ -129,7 +128,7 @@ a complete result.")
 (defun esup-child-send-result (results)
   "Send RESULTS to the parent process."
   (process-send-string esup-child-parent-results-process
-                       (prin1-to-string results)))
+                       (esup-child-serialize-results results)))
 
 (defun esup-child-send-eof ()
   "Make process see end-of-file in its input."
@@ -301,6 +300,32 @@ SEXP-STRING appears in FILE-NAME."
         (filename (when (>= (length sexp) 2)
                     (nth 2 sexp))))
     (or filename library)))
+
+(defun esup-child-serialize-result (esup-result)
+  "Serialize an ESUP-RESULT into a `read'able string.
+We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
+  (format
+   (concat
+    "(esup-result \"esup-result\" "
+    (format ":file %s "
+            (prin1-to-string (oref esup-result :file)))
+    (format ":start-point %d " (oref esup-result :start-point))
+    (format ":line-number %d " (oref esup-result :line-number))
+    (format ":expression-string %s "
+            (prin1-to-string (oref esup-result :expression-string)))
+    (format ":end-point %d " (oref esup-result :end-point))
+    (format ":exec-time %f " (oref esup-result :exec-time))
+    (format ":gc-number %d " (oref esup-result :gc-number))
+    (format ":gc-time %f" (oref esup-result :gc-time))
+    ")")))
+
+(defun esup-child-serialize-results (esup-results)
+  "Serialize a list of ESUP-RESULTS into a `read'able string."
+  (format "(list\n  %s)"
+          (mapconcat 'identity
+                     (cl-loop for result in esup-results
+                              collect (esup-child-serialize-result result))
+                     "\n  ")))
 
 (provide 'esup-child)
 ;;; esup-child.el ends here

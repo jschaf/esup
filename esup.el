@@ -524,9 +524,9 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
 (defun esup-read-result (start-point)
   "Return one `esup-result' object from the current buffer.
 Begins reading at START-POINT.
-Returns either an symbol `esup-result' or nil."
+Returns either a class `esup-result' or nil."
   (goto-char start-point)
-  (read (current-buffer)))
+  (eval (read (current-buffer))))
 
 (defun esup-next-separator-end-point ()
   "Return the end point of the next `esup-child-result-separator'."
