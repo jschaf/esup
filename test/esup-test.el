@@ -96,7 +96,7 @@
            (esup-child-profile-sexp (point-min) (point-max)))))
     (should (esup/buffer-contains-p
              esup/logstream-buffer
-             "LOG: profiling sexp *esup-ert-test*:1 1-1"))))
+             "LOG: profiling sexp *esup-ert-test*:1"))))
 
 (ert-deftest esup/empty-file ()
   "Test `esup-profile-sexp' with an empty string.
