@@ -6,7 +6,7 @@
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.5
+;; Version:  0.6
 ;; Package-Requires: ((cl-lib "0.5") (emacs "24"))
 ;; Keywords: convenience, processes
 
@@ -80,7 +80,7 @@
 (defgroup esup nil
   "A major mode for the Emacs Start Up Profiler."
   :prefix "esup-"
-  :version "0.5"
+  :version "0.6"
   :group 'languages)
 
 (defcustom esup-user-init-file user-init-file
