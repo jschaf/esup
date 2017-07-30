@@ -484,7 +484,7 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
                            collect (format "  %s" error-string))
                   "\n")
        "\n\n"
-       (esup-fontify-string "Results will incomplete due to errors.\n\n"
+       (esup-fontify-string "Results will be incomplete due to errors.\n\n"
                             'esup-error-face))
     ""))
 
