@@ -187,10 +187,21 @@ LEVEL is the number of `load's or `require's we've stepped into."
   (while (looking-at "[\s\t\n\r]*#@\\([0-9]+\\) ")
     (goto-char (+ (match-end 0) (string-to-number (match-string 1))))))
 
+(defun esup-child-create-location-info-string (&optional buffer)
+  "Create a string of the location info for BUFFER.
+BUFFER defaults to the current buffer."
+  (unless buffer (setq buffer (current-buffer)))
+  (let* ((line-number (line-number-at-pos (point)))
+         (file-name (with-current-buffer buffer (buffer-file-name)))
+         (location-information
+          (format "%s:%d" file-name line-number)))
+    location-information))
+
 (defun esup-child-profile-buffer (buffer &optional level)
   "Profile BUFFER and return the benchmarked expressions.
 LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
+
   (condition-case error-message
       (with-current-buffer buffer
         (goto-char (point-min))
@@ -206,8 +217,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
               results
               (after-init-time nil))
           (while (> start last-start)
-            (setq results (append results
-                                  (esup-child-profile-sexp start end level)))
+            (setq results
+                  (append results (esup-child-profile-sexp start end level)))
             (setq last-start start)
             (goto-char end)
             (esup-child-skip-byte-code-dynamic-docstrings)
@@ -218,7 +229,9 @@ LEVEL is the number of `load's or `require's we've stepped into."
           results))
     (error
      (message "ERROR(profile-buffer): %s" error-message)
-     (esup-child-send-log "ERROR(profile-buffer) at %s %s" buffer error-message)
+     (esup-child-send-log "ERROR(profile-buffer) at %s %s"
+                          (esup-child-create-location-info-string buffer)
+                          error-message)
      (esup-child-send-eof))))
 
 (defun esup-child-profile-sexp (start end &optional level)
@@ -229,15 +242,13 @@ LEVEL is the number of `load's or `require's we've stepped into."
   (let* ((sexp-string (esup-child-chomp (buffer-substring start end)))
          (line-number (line-number-at-pos start))
          (file-name (buffer-file-name))
-         (location-information
-          (format "%s:%s %d-%d" file-name line-number start end))
          sexp
          esup--profile-results)
     (condition-case error-message
         (progn
           (esup-child-send-log
            "profiling sexp %s %s\n"
-           location-information
+           (esup-child-create-location-info-string)
            (buffer-substring-no-properties start (min end (+ 30 start))))
 
           (setq sexp (if (string-equal sexp-string "")
@@ -268,7 +279,8 @@ LEVEL is the number of `load's or `require's we've stepped into."
       (error
        (message "ERROR: %s" error-message)
        (esup-child-send-log "ERROR(profile-sexp) at %s: %s"
-                            location-information error-message)
+                            (esup-child-create-location-info-string)
+                            error-message)
        (esup-child-send-eof)))))
 
 (defun esup-child-profile-string (sexp-string
