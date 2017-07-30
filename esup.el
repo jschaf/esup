@@ -133,11 +133,20 @@ Includes execution time, gc time and number of gc pauses."
   :group 'esup
   :version "24.3")
 
+(defface esup-error-face
+  '((t :inherit font-lock-warning-face))
+  "Face for displaying errors in the *esup* buffer."
+  :group 'esup
+  :version "25.1")
+
 (defvar esup-child-process nil
   "The current esup child process, i.e the Emacs being timed.")
 
 (defvar esup-emacs-path (concat invocation-directory invocation-name)
   "Path to the Emacs binary used for profiling.")
+
+(defvar esup-errors '()
+  "A list of error messages from the child Emacs.")
 
 
 (defun esup-total-exec-time (results)
@@ -309,7 +318,7 @@ port."
    :log 'esup--server-logger))
 
 (defun esup--server-filter (proc string)
-  "Filter log and result entries recieved at the parent process.
+  "Filter the log and result entries recieved at the parent process.
 PROC is the process and STRING is the message.  `esup-child'
 starts messages with LOGSTREAM or RESULTSSTREAM to indicate the
 type of message."
@@ -336,6 +345,8 @@ type of message."
     (esup-store-partial-result string))
 
    ((eq esup-child-log-port (process-contact proc :service))
+    (when (string-prefix-p "LOG: ERROR" string)
+      (push (substring string (length "LOG: ")) esup-errors))
     (esup-server-log string))
 
    (t
@@ -447,6 +458,7 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
     (with-current-buffer (esup-buffer)
       (erase-buffer)
       (esup-update-percentages results)
+      (insert (esup-render-errors esup-errors) result-break)
       (insert (esup-render-summary results) result-break)
       (cl-loop for result in results
                do (insert (render result) result-break))
@@ -455,6 +467,23 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
       (goto-char (point-min))
       (pop-to-buffer (current-buffer))))
   (message "esup finished"))
+
+(defun esup-render-errors (errors)
+  "Return a fontified string of ERRORS."
+  (if esup-errors
+      (concat
+       (esup-fontify-string
+        "ERROR: the child emacs had the following errors:\n"
+        'esup-error-face)
+       (mapconcat 'identity
+                  (cl-loop for error-string in errors
+                           collect (format "  %s" error-string))
+                  "\n")
+
+       "\n\n"
+       (esup-fontify-string "Results will incomplete due to errors.\n\n"
+                            'esup-error-face))
+    ""))
 
 (defun esup-render-summary (results)
   "Return a summary string for RESULTS."
