@@ -366,6 +366,17 @@ Provides a useful default for SERVER, CONNECTION and MESSAGE."
 (defvar esup-last-result-start-point 1
   "The end point of the last read result from `esup-incoming-results-buffer'.")
 
+(defun esup-reset ()
+  "Reset all variables and buffers for another run of `esup'."
+  (setq esup-last-result-start-point 1)
+  (with-current-buffer (get-buffer-create esup-server-log-buffer)
+    (erase-buffer))
+  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (erase-buffer))
+  (setq esup-errors '())
+  (when esup-server-process
+    (delete-process esup-server-process)))
+
 ;;;###autoload
 (defun esup (&optional init-file)
   "Profile the startup time of Emacs in the background.
@@ -379,15 +390,8 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
          (t esup-user-init-file)))
 
   (message "Starting esup...")
+  (esup-reset)
 
-  (setq esup-last-result-start-point 1)
-  (with-current-buffer (get-buffer-create esup-server-log-buffer)
-    (erase-buffer))
-  (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
-    (erase-buffer))
-
-  (when esup-server-process
-    (delete-process esup-server-process))
   (setq esup-server-process (esup-server-create (esup-select-port)))
   (setq esup-server-port (process-contact esup-server-process :service))
   (message "esup process started on port %s" esup-server-port)
@@ -479,7 +483,6 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
                   (cl-loop for error-string in errors
                            collect (format "  %s" error-string))
                   "\n")
-
        "\n\n"
        (esup-fontify-string "Results will incomplete due to errors.\n\n"
                             'esup-error-face))
