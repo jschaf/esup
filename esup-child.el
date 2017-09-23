@@ -316,20 +316,19 @@ SEXP-STRING appears in FILE-NAME."
 (defun esup-child-serialize-result (esup-result)
   "Serialize an ESUP-RESULT into a `read'able string.
 We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
-  (format
-   (concat
-    "(esup-result \"esup-result\" "
-    (format ":file %s "
-            (prin1-to-string (oref esup-result :file)))
-    (format ":start-point %d " (oref esup-result :start-point))
-    (format ":line-number %d " (oref esup-result :line-number))
-    (format ":expression-string %s "
-            (prin1-to-string (oref esup-result :expression-string)))
-    (format ":end-point %d " (oref esup-result :end-point))
-    (format ":exec-time %f " (oref esup-result :exec-time))
-    (format ":gc-number %d " (oref esup-result :gc-number))
-    (format ":gc-time %f" (oref esup-result :gc-time))
-    ")")))
+  (concat
+   "(esup-result \"esup-result\" "
+   (format ":file %s "
+           (prin1-to-string (oref esup-result :file)))
+   (format ":start-point %d " (oref esup-result :start-point))
+   (format ":line-number %d " (oref esup-result :line-number))
+   (format ":expression-string %s "
+           (prin1-to-string (oref esup-result :expression-string)))
+   (format ":end-point %d " (oref esup-result :end-point))
+   (format ":exec-time %f " (oref esup-result :exec-time))
+   (format ":gc-number %d " (oref esup-result :gc-number))
+   (format ":gc-time %f" (oref esup-result :gc-time))
+   ")"))
 
 (defun esup-child-serialize-results (esup-results)
   "Serialize a list of ESUP-RESULTS into a `read'able string."
