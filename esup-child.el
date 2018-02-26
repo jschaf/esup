@@ -40,19 +40,19 @@
          :type string
          :documentation "The file location for the result.")
    (start-point :initarg :start-point
-                :initform 0
+                :initform 1
                 :type number
                 :documentation
-                "The start position of the benchmarked expression.")
+     "The start position of the benchmarked expression.")
    (line-number :initarg :line-number
-                :initform 0
+                :initform 1
                 :type number
                 :documentation "The beginning line number of the expression.")
    (expression-string :initarg :expression-string
                       :initform ""
                       :type string
                       :documentation
-                      "A string representation of the benchmarked expression.")
+     "A string representation of the benchmarked expression.")
    (end-point :initarg :end-point
               :initform 0
               :type number

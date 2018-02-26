@@ -5,6 +5,7 @@
 (files "esup-child.el")
 
 (development
- (depends-on "noflet")
+ (depends-on "dash")
  (depends-on "ert-runner")
- (depends-on "el-mock"))
+ (depends-on "el-mock")
+ (depends-on "noflet"))
