@@ -176,7 +176,6 @@ LEVEL is the number of `load's or `require's we've stepped into."
         (progn
           ;; TODO: A file with no sexps (either nothing or comments) will
           ;; cause an error.
-          (message "esup: loading %s" abs-file-path)
           (esup-child-send-log "loading %s\n" abs-file-path)
           (esup-child-profile-buffer (find-file-noselect abs-file-path) level))
       ;; The file doesn't exist, return an empty list of `esup-result'
@@ -228,7 +227,6 @@ LEVEL is the number of `load's or `require's we've stepped into."
             (setq start (point)))
           results))
     (error
-     (message "ERROR(profile-buffer): %s" error-message)
      (esup-child-send-log "ERROR(profile-buffer) at %s %s"
                           (esup-child-create-location-info-string buffer)
                           error-message)
@@ -277,7 +275,6 @@ LEVEL is the number of `load's or `require's we've stepped into."
             (esup-child-send-result-separator)
             esup--profile-results)))
       (error
-       (message "ERROR: %s" error-message)
        (esup-child-send-log "ERROR(profile-sexp) at %s: %s"
                             (esup-child-create-location-info-string)
                             error-message)
