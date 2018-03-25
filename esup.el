@@ -462,7 +462,8 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
     (with-current-buffer (esup-buffer)
       (erase-buffer)
       (esup-update-percentages results)
-      (insert (esup-render-errors esup-errors) result-break)
+      (when esup-errors
+        (insert (esup-render-errors esup-errors) result-break))
       (insert (esup-render-summary results) result-break)
       (cl-loop for result in results
                do (insert (render result) result-break))
