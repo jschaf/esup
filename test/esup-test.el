@@ -140,6 +140,19 @@ Also sends all esup-child log messages to stdout.")
      (list
       (make-esup-result "/fake9/d.el" "(progn 'd)"))))))
 
+(ert-deftest esup-child-run__handles_require_with_sexp_filename ()
+  (with-esup-mock
+   '(:load-path ("/fake10")
+     :files
+     (("/fake10/bar.el" . "(require 'core (concat \"/specified/qux/\" \"core\"))")
+      ("/specified/qux/core.el" . "(progn 'core)")))
+
+   (should
+    (esup-results-equal-p
+     '(:gc-time :exec-time)
+     (esup-child-run "/fake10/bar.el" esup-test/fake-port)
+     (list (make-esup-result "/specified/qux/core.el" "(progn 'core)"))))))
+
 
 ;; Test Utilities
 (defun esup-results-equal-p (ignoring-slots a b)
@@ -258,6 +271,8 @@ Also sends all esup-child log messages to stdout.")
   `(let* ((load-path (plist-get ,props :load-path))
           (mock-fs (plist-get ,props :files))
           (locate-fn (esup-test-make-locate-file-fn mock-fs)))
+     (esup-debug-test "starting with-esup-mock: load-path=%s mock-fs=%s"
+                      load-path mock-fs)
      (noflet
        ((find-file-noselect
          (filename &optional nowarn rawfile wildcards)
@@ -291,7 +306,9 @@ Also sends all esup-child log messages to stdout.")
                  (esup-debug-test
                   "starting mock require: feature=%s filename=%s noerror=%s"
                   feature filename noerror)
-                 (funcall locate-fn (symbol-name feature) load-path))
+                 (if filename
+                     (funcall locate-fn filename load-path)
+                   (funcall locate-fn (symbol-name feature) load-path)))
 
 
         ;; Stub out network calls.

@@ -305,10 +305,16 @@ SEXP-STRING appears in FILE-NAME."
 
 (defun esup-child-require-to-load (sexp)
   "Given a require SEXP, return the corresponding file-name."
-  (let ((library (symbol-name (eval (nth 1 sexp))))
+  (let ((feature (symbol-name (eval (nth 1 sexp))))
         (filename (when (>= (length sexp) 2)
                     (nth 2 sexp))))
-    (or filename library)))
+    (if (not filename)
+        feature
+      (pcase (type-of filename)
+        ;; filename is simply a string
+        ('string filename)
+        ;; filename is an expression that we should evaluate.
+        ('cons (eval filename))))))
 
 (defun esup-child-serialize-result (esup-result)
   "Serialize an ESUP-RESULT into a `read'able string.
