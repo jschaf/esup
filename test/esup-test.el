@@ -216,8 +216,7 @@ Also sends all esup-child log messages to stdout.")
                (t
                 `(mismatch in ,slot
                            expected ,(eieio-oref a slot)
-                           =>
-                           actual ,(eieio-oref b slot))))))))
+                           but actual was ,(eieio-oref b slot))))))))
 (put 'esup-results-single-equal-p 'ert-explainer
      'esup-test--explain-single-esup-result)
 
