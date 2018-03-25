@@ -1,7 +1,6 @@
 language: generic
 sudo: no
 env:
-  - EVM_EMACS=emacs-24.5-travis
   - EVM_EMACS=emacs-25.3-travis
   - EVM_EMACS=emacs-git-snapshot-travis
 before_install:
