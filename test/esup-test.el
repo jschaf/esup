@@ -58,7 +58,8 @@ Also sends all esup-child log messages to stdout.")
 (ert-deftest esup-child-run__counts-gc()
   (with-esup-mock
    '(:load-path ("/fake")
-     :files (("/fake/bar-qux.el" . "(progn (garbage-collect) (garbage-collect))")))
+     :files
+     (("/fake/bar-qux.el" . "(progn (garbage-collect) (garbage-collect))")))
 
    (should
     (esup-results-equal-p
@@ -153,6 +154,21 @@ Also sends all esup-child log messages to stdout.")
      (esup-child-run "/fake10/bar.el" esup-test/fake-port)
      (list (make-esup-result "/specified/qux/core.el" "(progn 'core)"))))))
 
+(ert-deftest esup-child-run__doesnt_step_into_already_required_feature()
+  (with-esup-mock
+   '(:load-path ("/fake12")
+     :files (("/fake12/qux.el" . "(require 'baz) (require 'baz)")
+             ("/fake12/baz.el" . "(progn 'baz) (provide 'baz)")))
+
+   (should
+    (esup-results-equal-p
+     '(:gc-time :exec-time)
+     (esup-child-run "qux.el" esup-test/fake-port)
+     (list
+      (make-esup-result "/fake12/baz.el" "(progn 'baz)")
+      (make-esup-result "/fake12/baz.el" "(provide 'baz)"
+                        :start-point 14 :end-point 28))))))
+
 
 ;; Test Utilities
 (defun esup-results-equal-p (ignoring-slots a b)
@@ -183,6 +199,10 @@ Also sends all esup-child log messages to stdout.")
 (defun esup-test--explain-esup-results-equal-p (ignoring-slots a b)
   "Explain why `esup-results-equal-p' returned t or nil."
   (pcase a
+    ;; Actual is nil, but expected is not.
+    ((guard (and (null a) (not (null b))))
+     `(actual is nil but expected ,b))
+
     ;; Different types.
     ((guard (not (equal (type-of a) (type-of b))))
      `(different-types ,a ,b))
@@ -223,13 +243,14 @@ Also sends all esup-child log messages to stdout.")
               (cond
                ((-contains? ignoring-slots slot)
                 `(,slot IGNORED))
+               ;; Got a match
                ((equal (eieio-oref a slot) (eieio-oref b slot))
-                ;; nil because otherwise it starts truncating info.
-                nil)
+                `(,slot MATCHED on ,(eieio-oref a slot)))
+               ;; Explain the mismatch
                (t
                 `(mismatch in ,slot
-                           expected ,(eieio-oref a slot)
-                           but actual was ,(eieio-oref b slot))))))))
+                           actual was ,(eieio-oref b slot)
+                           but expected ,(eieio-oref a slot))))))))
 (put 'esup-results-single-equal-p 'ert-explainer
      'esup-test--explain-single-esup-result)
 
@@ -241,7 +262,7 @@ Also sends all esup-child log messages to stdout.")
    :end-point (1+ (length sexp))
     args))
 
-(defun esup-test-make-locate-file-fn (mock-fs) 
+(defun esup-test-make-locate-file-fn (mock-fs)
   (lambda (filename path &optional suffixes predicate)
     (esup-debug-test
      (concat "starting generated locate-file-fn: "
@@ -317,7 +338,7 @@ Also sends all esup-child log messages to stdout.")
         (process-send-string (process string)
                              (when esup-debug-enabled (message string)))
         (process-send-eof (&optional process)))
-       
+
        ,@body)))
 
 

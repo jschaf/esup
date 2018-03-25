@@ -118,7 +118,7 @@ a complete result.")
 (defun esup-child-send-log (format-str &rest args)
   "Send FORMAT-STR formatted with ARGS as a log message."
   (process-send-string esup-child-parent-log-process
-                       (apply 'format (concat "LOG: " format-str) args)))
+                       (apply 'format (concat "LOG: " format-str "\n") args)))
 
 (defun esup-child-send-result-separator ()
   "Send the result separator to the parent process."
@@ -137,7 +137,7 @@ a complete result.")
 (defun esup-child-log-invocation-options ()
   "Log the invocation options that esup-child was started with."
   (let ((invocation-binary (concat invocation-directory invocation-name)))
-    (esup-child-send-log "binary: %s\n" invocation-binary)))
+    (esup-child-send-log "binary: %s" invocation-binary)))
 
 (defun esup-child-init-streams (port)
   "Initialize the streams for logging and results on PORT."
@@ -148,6 +148,8 @@ a complete result.")
 
 (defun esup-child-run (init-file port)
   "Profile INIT-FILE and send results to localhost:PORT."
+  (esup-child-send-log "starting esup-child on '%s' on port '%s'"
+                       init-file port)
   (esup-child-init-streams port)
   (setq enable-local-variables :safe)
   (esup-child-log-invocation-options)
@@ -166,6 +168,35 @@ a complete result.")
   "Profile FILE-NAME and return the benchmarked expressions.
 LEVEL is the number of `load's or `require's we've stepped into."
   (unless level (setq level 0))
+  (esup-child-send-log "profiling file='%s' level='%d' type=%s"
+                       file-name level (type-of file-name))
+  (pcase (type-of file-name)
+    ;; A symbol, probably from a `require'.
+    ('symbol
+     (if (featurep file-name)
+         ;; Already require'd this feature, so skip.
+         (progn
+           (esup-child-send-log
+            "skipping already required feature %s" file-name)
+           '())
+
+       (esup-child-send-log
+        "symbol %s wasn't yet required, so loading" file-name)
+       (esup-child-load-file (symbol-name file-name) level)))
+
+    ;; A string, probably from (load "/path/to/file").
+    ('string
+     (esup-child-load-file file-name level))
+
+    ;; Anything else.
+    (_
+     (error "unknown type of file-name '%s' with type '%s'"
+            file-name (type-of file-name)))))
+
+(defun esup-child-load-file (file-name level)
+  "Load and profile ABS-FILE-PATH.
+Return the list of `esup-result.'
+LEVEL is the number of `require' forms we've stepped into."
   (let* ((clean-file (esup-child-chomp file-name))
          (abs-file-path
           (locate-file clean-file load-path
@@ -174,11 +205,10 @@ LEVEL is the number of `load's or `require's we've stepped into."
                        (cons "" load-suffixes))))
     (if abs-file-path
         (progn
-          ;; TODO: A file with no sexps (either nothing or comments) will
-          ;; cause an error.
-          (esup-child-send-log "loading %s\n" abs-file-path)
+          (esup-child-send-log "loading %s" abs-file-path)
           (esup-child-profile-buffer (find-file-noselect abs-file-path) level))
       ;; The file doesn't exist, return an empty list of `esup-result'
+      (esup-child-send-log "found no matching files for %s" abs-file-path)
       '())))
 
 (defun esup-child-skip-byte-code-dynamic-docstrings ()
@@ -245,7 +275,7 @@ LEVEL is the number of `load's or `require's we've stepped into."
     (condition-case error-message
         (progn
           (esup-child-send-log
-           "profiling sexp %s %s\n"
+           "profiling sexp %s %s"
            (esup-child-create-location-info-string)
            (buffer-substring-no-properties start (min end (+ 30 start))))
 
@@ -258,12 +288,13 @@ LEVEL is the number of `load's or `require's we've stepped into."
             '())
            ;; Recursively profile loaded files.
            ((looking-at "(load ")
+            (esup-child-send-log "looking at load call %s" sexp)
             (goto-char (match-end 0))
             (esup-child-profile-file (eval (nth 1 sexp)) (1+ level)))
 
            ((and (< level esup-child-profile-require-level)
                  (looking-at "(require "))
-            ;; TODO: See if symbol already provided.  #38
+            (esup-child-send-log "looking at require call %s" sexp)
             (esup-child-profile-file (esup-child-require-to-load sexp)
                                      (1+ level)))
 
@@ -275,8 +306,9 @@ LEVEL is the number of `load's or `require's we've stepped into."
             (esup-child-send-result-separator)
             esup--profile-results)))
       (error
-       (esup-child-send-log "ERROR(profile-sexp) at %s: %s"
+       (esup-child-send-log "ERROR(profile-sexp) at %s with sexp %s: %s"
                             (esup-child-create-location-info-string)
+                            sexp
                             error-message)
        (esup-child-send-eof)))))
 
@@ -305,7 +337,7 @@ SEXP-STRING appears in FILE-NAME."
 
 (defun esup-child-require-to-load (sexp)
   "Given a require SEXP, return the corresponding file-name."
-  (let ((feature (symbol-name (eval (nth 1 sexp))))
+  (let ((feature (eval (nth 1 sexp)))
         (filename (when (>= (length sexp) 2)
                     (nth 2 sexp))))
     (if (not filename)
