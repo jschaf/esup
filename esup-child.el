@@ -158,13 +158,12 @@ a complete result.")
 
 (defun esup-child-run (init-file port &optional max-depth)
   "Profile INIT-FILE and send results to localhost:PORT."
-  (esup-child-send-log "default max-depth %s" max-depth esup-child-max-depth)
+  (esup-child-init-streams port)
   (setq esup-child-max-depth (or max-depth esup-child-max-depth))
   (esup-child-send-log "starting esup-child on '%s' port=%s max-depth=%s"
                        init-file port esup-child-max-depth)
   (advice-add 'require :around 'esup-child-require-advice)
   (advice-add 'load :around 'esup-child-load-advice)
-  (esup-child-init-streams port)
   (setq enable-local-variables :safe)
   (esup-child-log-invocation-options)
   (prog1

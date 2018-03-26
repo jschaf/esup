@@ -279,7 +279,9 @@ The child Emacs send data to this process on
     (with-current-buffer esup-server-log-buffer
       (unless (bobp) (insert "\n"))
       (goto-char (point-max))
-      (insert (apply 'format  format-str args)))))
+      (if args
+          (insert (apply 'format  format-str args))
+        (insert format-str)))))
 
 (defvar esup-incoming-results-buffer "*esup-results*"
   "The buffer to hold incoming information from the child Emacs.")
