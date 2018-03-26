@@ -121,8 +121,8 @@ Also sends all esup-child log messages to stdout.")
    (should
     (esup-results-equal-p
      '(:gc-time :exec-time)
-     (let ((esup-child-profile-require-level 1))
-       (esup-child-run "a.el" esup-test/fake-port))
+     (let ((depth 1))
+       (esup-child-run "a.el" esup-test/fake-port depth))
      (list
       (make-esup-result "/fake8/c.el" "(require 'd)"))))))
 
@@ -136,8 +136,8 @@ Also sends all esup-child log messages to stdout.")
    (should
     (esup-results-equal-p
      '(:gc-time :exec-time)
-     (let ((esup-child-profile-require-level 2))
-       (esup-child-run "a.el" esup-test/fake-port))
+     (let ((depth 2))
+       (esup-child-run "a.el" esup-test/fake-port depth))
      (list
       (make-esup-result "/fake9/d.el" "(progn 'd)"))))))
 
@@ -167,9 +167,11 @@ Also sends all esup-child log messages to stdout.")
      (list
       (make-esup-result "/fake12/baz.el" "(progn 'baz)")
       (make-esup-result "/fake12/baz.el" "(provide 'baz)"
-                        :start-point 14 :end-point 28))))))
+                        :start-point 14 :end-point 28)
+      (make-esup-result "/fake12/qux.el" "(require 'baz)"
+                        :start-point 16 :end-point 30))))))
 
-(ert-deftest esup-child-run__advises_require_and_load()
+(ert-deftest esup-child-run__advises_require()
   (with-esup-mock
    '(:load-path ("/fake13")
      :files (("/fake13/qux.el" . "(defun my-require (feat) (require feat)) (my-require 'baz)")
@@ -181,12 +183,26 @@ Also sends all esup-child log messages to stdout.")
      (esup-child-run "qux.el" esup-test/fake-port)
      (list
       (make-esup-result "/fake13/qux.el" "(defun my-require (feat) (require feat))")
-      (make-esup-result "/fake13/qux.el" "(my-require 'baz)"
-                        :start-point 42)
       (make-esup-result "/fake13/baz.el" "(progn 'baz)")
       (make-esup-result "/fake13/baz.el" "(provide 'baz)"
                         :start-point 14 :end-point 28))))))
 
+(ert-deftest esup-child-run__advises_load()
+  (with-esup-mock
+   '(:load-path ("/fake14")
+     :files
+     (("/fake14/qux.el" . "(defun my-load (file) (load file)) (my-load \"baz\")")
+      ("/fake14/baz.el" . "(progn 'baz) (provide 'baz)")))
+
+   (should
+    (esup-results-equal-p
+     '(:gc-time :exec-time)
+     (esup-child-run "qux.el" esup-test/fake-port)
+     (list
+      (make-esup-result "/fake14/qux.el" "(defun my-load (file) (load file))")
+      (make-esup-result "/fake14/baz.el" "(progn 'baz)")
+      (make-esup-result "/fake14/baz.el" "(provide 'baz)"
+                        :start-point 14 :end-point 28))))))
 
 
 ;; Test Utilities
@@ -267,9 +283,9 @@ Also sends all esup-child log messages to stdout.")
                 `(,slot MATCHED on ,(eieio-oref a slot)))
                ;; Explain the mismatch
                (t
-                `(mismatch in ,slot
-                           actual was ,(eieio-oref b slot)
-                           but expected ,(eieio-oref a slot))))))))
+                `(,slot MISMATCH
+                        actual was ,(eieio-oref b slot)
+                        but expected ,(eieio-oref a slot))))))))
 (put 'esup-results-single-equal-p 'ert-explainer
      'esup-test--explain-single-esup-result)
 
@@ -295,7 +311,10 @@ Also sends all esup-child log messages to stdout.")
             (-non-nil
              ;; Find files that exist in the mock-fs
              (-map
-              (lambda (path) (car-safe (assoc path mock-fs)))
+              (lambda (path)
+                (car-safe
+                 (or (assoc path mock-fs)
+                     (assoc (concat "./" path) mock-fs))))
               all-files))))
       (esup-debug-test "searching for file match: matching-files=%s all-files=%s"
                        matching-files-in-mock-fs all-files)
@@ -315,59 +334,63 @@ Also sends all esup-child log messages to stdout.")
        (esup-debug-test "starting with-esup-mock: load-path=%s mock-fs=%s"
                         load-path mock-fs)
        (noflet
-         ((find-file-noselect
-           (filename &optional nowarn rawfile wildcards)
-           (esup-debug-test
-            (concat
-             "starting mock find-file-no-select: "
-             "filename=%s nowarn=%s rawfile=%s wildcards=%s")
-            filename nowarn rawfile wildcards)
+        ((find-file-noselect
+          (filename &optional nowarn rawfile wildcards)
+          (esup-debug-test
+           (concat
+            "starting mock find-file-no-select: "
+            "filename=%s nowarn=%s rawfile=%s wildcards=%s")
+           filename nowarn rawfile wildcards)
 
-           (let ((mock-file-exists (assoc filename mock-fs))
-                 (contents (alist-get filename mock-fs)))
-             (if mock-file-exists
-                 (with-current-buffer (get-buffer-create filename)
-                   (setq-local buffer-file-name filename)
-                   (setq-local buffer-read-only nil)
-                   (insert contents)
-                   (current-buffer))
-               (error "Unknown file %s not in mock-fs" filename))))
+          (let ((mock-file-exists (assoc filename mock-fs))
+                (contents (alist-get filename mock-fs)))
+            (if mock-file-exists
+                (with-current-buffer (get-buffer-create filename)
+                  (setq-local buffer-file-name filename)
+                  (setq-local buffer-read-only nil)
+                  (insert contents)
+                  (current-buffer))
+              (error "Unknown file %s not in mock-fs" filename))))
 
-          (locate-file
-           (filename path &optional suffixes predicate)
-           (esup-debug-test
-            "starting mock locate-file: filename=%s path=%s suffixes=%s pred=%s"
-            filename path suffixes predicate)
+         (locate-file
+          (filename path &optional suffixes predicate)
+          (esup-debug-test
+           "starting mock locate-file: filename=%s path=%s suffixes=%s pred=%s"
+           filename path suffixes predicate)
 
-           (let ((results (funcall locate-fn filename path suffixes predicate)))
-             (esup-debug-test "locate-file(answer): %s" results)
-             results))
+          (let ((results (funcall locate-fn filename path suffixes predicate)))
+            (esup-debug-test "locate-file mock returned '%s'" results)
+            results))
 
-          (require (feature &optional filename noerror)
-                   (esup-debug-test
-                    "starting mock require: feature=%s filename=%s noerror=%s"
-                    feature filename noerror)
-                   (if filename
-                       (funcall locate-fn filename load-path)
-                     (funcall locate-fn (symbol-name feature) load-path)))
+         (require (feature &optional filename noerror)
+                  (esup-debug-test
+                   "starting mock require: feature=%s filename=%s noerror=%s"
+                   feature filename noerror)
+                  (if filename
+                      (funcall locate-fn filename load-path)
+                    (funcall locate-fn (symbol-name feature) load-path)))
 
 
-          ;; Stub out network calls.
-          (esup-child-init-streams (port))
-          (kill-emacs (&optional arg))
-          (process-send-string (process string)
-                               (when esup-debug-enabled (message string)))
-          (process-send-eof (&optional process)))
+         ;; Stub out network calls.
+         (esup-child-init-streams (port))
+         (kill-emacs (&optional arg))
+         (process-send-string (process string)
+                              (when esup-debug-enabled (message string)))
+         (process-send-eof (&optional process)))
 
-         ,@body
+        ,@body
 
-         (esup-debug-test "test added features %s"
-                          (-difference features ',old-features))
-         ;; Reset the features list in case any tests provided features.
-         (setq features ',old-features)
-         ))
+        (esup-debug-test "test added features %s"
+                         (-difference features ',old-features))
+        ;; Reset the features list in case any tests provided features.
+        (setq features ',old-features)
 
-    ))
+        ;; Reset the max depth since the tests re-use the same environment.
+        (when (and (boundp 'esup-child-max-depth)
+                   (not (eq esup-child-max-depth 2)))
+          (esup-debug-test "Resetting esup-child-max-depth back to 2 from %d"
+                           esup-child-max-depth)
+          (setq esup-child-max-depth 2))))))
 
 
 ;; Test Utility Tests
