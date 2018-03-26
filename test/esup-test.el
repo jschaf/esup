@@ -1,4 +1,4 @@
-;;; esup-tests.el --- tests for esup -*- lexical-binding: t -*-
+;;; esup-test.el --- tests for esup -*- lexical-binding: t -*-
 
 ;;; Commentary:
 
@@ -169,6 +169,25 @@ Also sends all esup-child log messages to stdout.")
       (make-esup-result "/fake12/baz.el" "(provide 'baz)"
                         :start-point 14 :end-point 28))))))
 
+(ert-deftest esup-child-run__advises_require_and_load()
+  (with-esup-mock
+   '(:load-path ("/fake13")
+     :files (("/fake13/qux.el" . "(defun my-require (feat) (require feat)) (my-require 'baz)")
+             ("/fake13/baz.el" . "(progn 'baz) (provide 'baz)")))
+
+   (should
+    (esup-results-equal-p
+     '(:gc-time :exec-time)
+     (esup-child-run "qux.el" esup-test/fake-port)
+     (list
+      (make-esup-result "/fake13/qux.el" "(defun my-require (feat) (require feat))")
+      (make-esup-result "/fake13/qux.el" "(my-require 'baz)"
+                        :start-point 42)
+      (make-esup-result "/fake13/baz.el" "(progn 'baz)")
+      (make-esup-result "/fake13/baz.el" "(provide 'baz)"
+                        :start-point 14 :end-point 28))))))
+
+
 
 ;; Test Utilities
 (defun esup-results-equal-p (ignoring-slots a b)
@@ -289,57 +308,66 @@ Also sends all esup-child log messages to stdout.")
    (t (concat (file-name-as-directory dir) file))))
 
 (defmacro with-esup-mock (props &rest body)
-  `(let* ((load-path (plist-get ,props :load-path))
-          (mock-fs (plist-get ,props :files))
-          (locate-fn (esup-test-make-locate-file-fn mock-fs)))
-     (esup-debug-test "starting with-esup-mock: load-path=%s mock-fs=%s"
-                      load-path mock-fs)
-     (noflet
-       ((find-file-noselect
-         (filename &optional nowarn rawfile wildcards)
-         (esup-debug-test
-          (concat
-           "starting mock find-file-no-select: "
-           "filename=%s nowarn=%s rawfile=%s wildcards=%s")
-          filename nowarn rawfile wildcards)
+  (let ((old-features (-clone features)))
+    `(let* ((load-path (plist-get ,props :load-path))
+            (mock-fs (plist-get ,props :files))
+            (locate-fn (esup-test-make-locate-file-fn mock-fs)))
+       (esup-debug-test "starting with-esup-mock: load-path=%s mock-fs=%s"
+                        load-path mock-fs)
+       (noflet
+         ((find-file-noselect
+           (filename &optional nowarn rawfile wildcards)
+           (esup-debug-test
+            (concat
+             "starting mock find-file-no-select: "
+             "filename=%s nowarn=%s rawfile=%s wildcards=%s")
+            filename nowarn rawfile wildcards)
 
-         (let ((mock-file-exists (assoc filename mock-fs))
-               (contents (alist-get filename mock-fs)))
-           (if mock-file-exists
-               (with-current-buffer (get-buffer-create filename)
-                 (setq-local buffer-file-name filename)
-                 (setq-local buffer-read-only nil)
-                 (insert contents)
-                 (current-buffer))
-             (error "Unknown file %s not in mock-fs" filename))))
+           (let ((mock-file-exists (assoc filename mock-fs))
+                 (contents (alist-get filename mock-fs)))
+             (if mock-file-exists
+                 (with-current-buffer (get-buffer-create filename)
+                   (setq-local buffer-file-name filename)
+                   (setq-local buffer-read-only nil)
+                   (insert contents)
+                   (current-buffer))
+               (error "Unknown file %s not in mock-fs" filename))))
 
-        (locate-file
-         (filename path &optional suffixes predicate)
-         (esup-debug-test
-          "starting mock locate-file: filename=%s path=%s suffixes=%s pred=%s"
-          filename path suffixes predicate)
+          (locate-file
+           (filename path &optional suffixes predicate)
+           (esup-debug-test
+            "starting mock locate-file: filename=%s path=%s suffixes=%s pred=%s"
+            filename path suffixes predicate)
 
-         (let ((results (funcall locate-fn filename path suffixes predicate)))
-           (esup-debug-test "locate-file(answer): %s" results)
-           results))
+           (let ((results (funcall locate-fn filename path suffixes predicate)))
+             (esup-debug-test "locate-file(answer): %s" results)
+             results))
 
-        (require (feature &optional filename noerror)
-                 (esup-debug-test
-                  "starting mock require: feature=%s filename=%s noerror=%s"
-                  feature filename noerror)
-                 (if filename
-                     (funcall locate-fn filename load-path)
-                   (funcall locate-fn (symbol-name feature) load-path)))
+          (require (feature &optional filename noerror)
+                   (esup-debug-test
+                    "starting mock require: feature=%s filename=%s noerror=%s"
+                    feature filename noerror)
+                   (if filename
+                       (funcall locate-fn filename load-path)
+                     (funcall locate-fn (symbol-name feature) load-path)))
 
 
-        ;; Stub out network calls.
-        (esup-child-init-streams (port))
-        (kill-emacs (&optional arg))
-        (process-send-string (process string)
-                             (when esup-debug-enabled (message string)))
-        (process-send-eof (&optional process)))
+          ;; Stub out network calls.
+          (esup-child-init-streams (port))
+          (kill-emacs (&optional arg))
+          (process-send-string (process string)
+                               (when esup-debug-enabled (message string)))
+          (process-send-eof (&optional process)))
 
-       ,@body)))
+         ,@body
+
+         (esup-debug-test "test added features %s"
+                          (-difference features ',old-features))
+         ;; Reset the features list in case any tests provided features.
+         (setq features ',old-features)
+         ))
+
+    ))
 
 
 ;; Test Utility Tests
@@ -455,5 +483,5 @@ Also sends all esup-child log messages to stdout.")
      :gc-time 20
      :exec-time 40))))
 
-(provide 'esup-tests)
+(provide 'esup-test)
 ;;; esup-test.el ends here
