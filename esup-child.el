@@ -75,7 +75,7 @@
                :documentation "The percentage of time taken by expression."))
   "A record of benchmarked results.")
 
-(defvar esup-child-max-depth 2
+(defvar esup-child-max-depth 1
   "How deep to profile (require) statements.
 0, don't step into any require statements.
 1, step into require statements in `esup-init-file'.
