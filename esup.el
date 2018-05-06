@@ -6,7 +6,7 @@
 ;; Maintainer:  Joe Schafer <joe@jschaf.com>
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.6
+;; Version:  0.7
 ;; Package-Requires: ((cl-lib "0.5") (emacs "24"))
 ;; Keywords: convenience, processes
 
@@ -87,6 +87,14 @@
   "The user init files to profile."
   :group 'esup
   :type 'string)
+
+(defcustom esup-depth 1
+  "How deep to profile require and load expressions.
+0, don't step into any require statements.
+1, step into require statements in `esup-init-file'.
+n, step into up to n levels of require statements."
+  :group 'esup
+  :type 'integer)
 
 (defcustom esup-run-as-batch-p nil
   "If non-nil, run the profiled Emacs as batch.
@@ -404,9 +412,10 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
                         "-q"
                         "-L" ,esup-load-path
                         "-l" "esup-child"
-                        ,(format "--eval=(esup-child-run \"%s\" \"%s\")"
+                        ,(format "--eval=(esup-child-run \"%s\" \"%s\" %d)"
                                  init-file
-                                 esup-server-port))))
+                                 esup-server-port
+                                 esup-depth))))
 
     ;; The option -q is set by itself because this `start-process' errors if we
     ;; pass either an empty string or nil as an argument.
