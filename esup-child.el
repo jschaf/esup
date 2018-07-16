@@ -187,7 +187,7 @@ Decrement the depth level after complete."
      (setq esup-child-last-call-intercept-results '())
      (prog1
          ;; This is cleared after `esup-child-profile-string' completes.
-         (setq esup-child-last-call-intercept-results 
+         (setq esup-child-last-call-intercept-results
                (progn ,@body))
        (setq esup-child-current-depth
              (1- esup-child-current-depth)))))
@@ -421,4 +421,3 @@ We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
 
 (provide 'esup-child)
 ;;; esup-child.el ends here
-
