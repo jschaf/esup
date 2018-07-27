@@ -273,7 +273,7 @@ BUFFER defaults to the current buffer."
 
 (defun esup-child-profile-buffer (buffer)
   "Profile BUFFER and return the benchmarked expressions."
-  (condition-case error-message
+  (condition-case-unless-debug error-message
       (with-current-buffer buffer
         (goto-char (point-min))
         (forward-comment (buffer-size))
@@ -317,7 +317,7 @@ Returns a list of class `esup-result'."
      (esup-child-create-location-info-string)
      (buffer-substring-no-properties start (min end (+ 30 start))))
 
-    (condition-case error-message
+    (condition-case-unless-debug error-message
         (progn
           (setq sexp (if (string-equal sexp-string "")
                          ""
