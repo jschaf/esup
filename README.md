@@ -6,7 +6,9 @@ ESUP - Emacs Start Up Profiler
 
 Benchmark Emacs Startup time without ever leaving your Emacs.
 
-![esup screenshot](https://s18.postimg.org/toxvx37kn/Screen_Shot_2018-03-25_at_3.32.41_PM.png "esup screenshot")
+<p align="center">
+  <img src="./esup-screenshot.png" width="512" height="504"/>
+</p>
 
 Installation
 ============
