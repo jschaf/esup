@@ -388,9 +388,10 @@ Provides a useful default for SERVER, CONNECTION and MESSAGE."
     (delete-process esup-server-process)))
 
 ;;;###autoload
-(defun esup (&optional init-file)
+(defun esup (&optional init-file &rest args)
   "Profile the startup time of Emacs in the background.
-If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
+If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE.
+ARGS is a list of extra command line arguments to pass to Emacs."
   (interactive "P")
   (setq init-file
         (cond
@@ -409,6 +410,7 @@ If INIT-FILE is non-nil, profile that instead of USER-INIT-FILE."
   (let ((process-args `("*esup-child*"
                         "*esup-child*"
                         ,esup-emacs-path
+                        ,@args
                         "-q"
                         "-L" ,esup-load-path
                         "-l" "esup-child"
