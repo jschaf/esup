@@ -365,7 +365,7 @@ SEXP-STRING appears in FILE-NAME."
 
           ;; Otherwise, use the normal profile results.
           (list
-           (esup-result "esup-result"
+           (esup-result (when (<= emacs-major-version 25) "esup-result")
                         :file file-name
                         :expression-string sexp-string
                         :start-point start-point :end-point end-point
@@ -378,7 +378,7 @@ SEXP-STRING appears in FILE-NAME."
 
 
 (defun esup-child-require-feature-to-filename (feature &optional filename)
-  "Given a require FEATURE, return the corresponding file-name."
+  "Given a require FEATURE, return the corresponding FILENAME."
   (esup-child-send-log
    "converting require to file-name feature='%s' filename='%s'"
    feature filename)
@@ -398,7 +398,7 @@ SEXP-STRING appears in FILE-NAME."
   "Serialize an ESUP-RESULT into a `read'able string.
 We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
   (concat
-   "(esup-result \"esup-result\" "
+   "(esup-result (when (<= emacs-major-version 25) \"esup-result\") "
    (format ":file %s "
            (prin1-to-string (oref esup-result :file)))
    (format ":start-point %d " (oref esup-result :start-point))
