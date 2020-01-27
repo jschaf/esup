@@ -1,8 +1,8 @@
-[![Build Status](https://travis-ci.org/jschaf/esup.svg?branch=master)](https://travis-ci.org/jschaf/esup) [![MELPA](http://melpa.org/packages/esup-badge.svg)](http://melpa.org/#/esup)
-
-
 ESUP - Emacs Start Up Profiler
 ==============================
+
+[![Build Status][actions badge]][actions link]
+[![MELPA][melpa badge]][melpa link]
 
 Benchmark Emacs Startup time without ever leaving your Emacs.
 
@@ -93,3 +93,8 @@ git push origin MY-NEW-FIX
 ```
 
 Create a pull request with the normal Github user interface.
+
+[actions badge]: https://github.com/jschaf/esup/workflows/build/badge.svg
+[actions link]: https://github.com/jschaf/esup/actions
+[melpa badge]: http://melpa.org/packages/esup-badge.svg
+[melpa link]: http://melpa.org/#/esup
