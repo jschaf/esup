@@ -1,0 +1,63 @@
+name: build
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    name: "GNU Emacs ${{ matrix.emacs_version }}"
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+      matrix:
+        emacs_version:
+          - '25.3'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2-beta
+        with:
+          fetch-depth: 5
+
+      - name: Setup GNU Emacs
+        uses: purcell/setup-emacs@master
+        with:
+          version: ${{ matrix.emacs_version }}
+
+      - name: Setup Cask
+        run: curl -fsSkL https://raw.github.com/cask/cask/master/go | python
+
+      - name: Set Environment Variables
+        run: |
+          echo "::set-env name=PATH::$HOME/.cask/bin:$PATH"
+
+          # Code coverage feature.
+          # TODO(serghei): Enable this in tests.
+          if [ "${{ matrix.emacs_version }}" != "snapshot" ]; then
+            echo "::set-env name=UNDERCOVER_FORCE::1"
+          fi
+
+      - name: Fast Makefile Test
+        run: make help
+
+      - name: Initialize the Project
+        run: make init
+
+      - name: Byte Compile BNF Mode
+        run: make
+
+        # TODO(serghei): Check for Errors in the Documentation
+      - name: Run Unit Tests
+        run: make test
+
+      - name: After Success Reporting
+        if: success()
+        run: git log --format=fuller -5
