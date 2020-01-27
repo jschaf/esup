@@ -7,7 +7,7 @@
 ;; Created: 19 May 2013
 ;; URL: http://github.com/jschaf/esup
 ;; Version:  0.7
-;; Package-Requires: ((cl-lib "0.5") (emacs "24"))
+;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 ;; Keywords: convenience, processes
 
 ;; This file is NOT part of GNU Emacs.
@@ -519,8 +519,8 @@ ARGS is a list of extra command line arguments to pass to Emacs."
                           'esup-timing-information)
      "\n")))
 
-(defmethod render ((obj esup-result))
-  "Render fields with ESUP-RESULT and return the string."
+(cl-defmethod render ((obj esup-result))
+  "Render fields with OBJ and return the string."
   (with-slots (file expression-string start-point end-point line-number
                     exec-time percentage)
       obj
