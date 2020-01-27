@@ -19,7 +19,16 @@ jobs:
 
       matrix:
         emacs_version:
+          - '25.1'
+          - '25.2'
           - '25.3'
+          - '26.1'
+          - '26.2'
+          - '26.3'
+          - snapshot
+        include:
+          - emacs_version: snapshot
+            allow_failure: true
 
     steps:
       - name: Checkout Code
@@ -54,8 +63,13 @@ jobs:
       - name: Byte Compile BNF Mode
         run: make
 
+      - name: Run Unit Tests (+falures)
+        if: matrix.allow_failure == true
+        run: 'make test || true'
+
         # TODO(serghei): Check for Errors in the Documentation
-      - name: Run Unit Tests
+      - name: Run Unit Tests (-falures)
+        if: matrix.allow_failure != true
         run: make test
 
       - name: After Success Reporting
