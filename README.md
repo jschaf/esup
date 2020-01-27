@@ -3,6 +3,7 @@ ESUP - Emacs Start Up Profiler
 
 [![Build Status][actions badge]][actions link]
 [![MELPA][melpa badge]][melpa link]
+[![MELPA Stable][melpa-s badge]][melpa-s link]
 
 Benchmark Emacs Startup time without ever leaving your Emacs.
 
@@ -98,3 +99,5 @@ Create a pull request with the normal Github user interface.
 [actions link]: https://github.com/jschaf/esup/actions
 [melpa badge]: http://melpa.org/packages/esup-badge.svg
 [melpa link]: http://melpa.org/#/esup
+[melpa-s badge]: https://stable.melpa.org/packages/esup-badge.svg
+[melpa-s link]: https://stable.melpa.org/#/esup
