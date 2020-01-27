@@ -519,8 +519,8 @@ ARGS is a list of extra command line arguments to pass to Emacs."
                           'esup-timing-information)
      "\n")))
 
-(defmethod render ((obj esup-result))
-  "Render fields with ESUP-RESULT and return the string."
+(cl-defmethod render ((obj esup-result))
+  "Render fields with OBJ and return the string."
   (with-slots (file expression-string start-point end-point line-number
                     exec-time percentage)
       obj
