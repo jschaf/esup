@@ -14,6 +14,11 @@ Benchmark Emacs Startup time without ever leaving your Emacs.
 Installation
 ============
 
+Known to work with GNU Emacs 25.1 and later. Esup may work with
+older versions of Emacs, but this is NOT guaranteed. Bug reports
+for problems related to using Esup with older versions of
+Emacs will most like not be addressed.
+
 **With MELPA**
 
 First, add the package repository:

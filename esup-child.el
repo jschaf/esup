@@ -386,13 +386,13 @@ SEXP-STRING appears in FILE-NAME."
   (if (not filename)
       ;; Filename wasn't provided so use the feature.
       (pcase (type-of feature)
-        (`symbol (symbol-name feature))
-        (`cons (symbol-name (eval feature))))
+        ('symbol (symbol-name feature))
+        ('cons (symbol-name (eval feature))))
 
     ;; Filename was provided so it overrides the feature.
     (pcase (type-of filename)
-      (`string filename)
-      (`cons (eval filename)))))
+      ('string filename)
+      ('cons (eval filename)))))
 
 (defun esup-child-serialize-result (esup-result)
   "Serialize an ESUP-RESULT into a `read'able string.
