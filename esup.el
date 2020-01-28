@@ -3,26 +3,41 @@
 ;; Copyright (C) 2014-2017 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
-;; Maintainer:  Joe Schafer <joe@jschaf.com>
+;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
 ;; Created: 19 May 2013
+;; Version: 0.7.1
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.7
-;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 ;; Keywords: convenience, processes
+;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 
 ;; This file is NOT part of GNU Emacs.
 
-;; This program is free software; you can redistribute it and/or
+;;;; License
+
+;; This file is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
-;; as published by the Free Software Foundation; either version 2
+;; as published by the Free Software Foundation; either version 3
 ;; of the License, or (at your option) any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
+
+;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;;; Installation:
+;; You should have received a copy of the GNU General Public License
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; `esup' profiles your Emacs startup time by examining all top-level
+;; S-expressions (sexps).  `esup' starts a new Emacs process from Emacs to
+;; profile each SEXP.  After the profiled Emacs is complete, it will exit and
+;; your Emacs will display the results.
+;;
+;; `esup' will step into `require' and `load' forms at the top level of a file,
+;; but not if they're enclosed in any other statement.
+;;
+;; Installation:
 ;;
 ;; Place esup.el on your `load-path' by adding this to your
 ;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
@@ -34,18 +49,13 @@
 ;; (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ;;
 ;; M-x `esup' to profile your Emacs startup and display the results.
-
-;;; Commentary:
 ;;
 ;; The most recent code is always at http://github.com/jschaf/esup
-;;
-;; `esup' profiles your Emacs startup time by examining all top-level
-;; S-expressions (sexps).  `esup' starts a new Emacs process from Emacs to
-;; profile each SEXP.  After the profiled Emacs is complete, it will exit and
-;; your Emacs will display the results.
-;;
-;; `esup' will step into `require' and `load' forms at the top level of a file,
-;; but not if they're enclosed in any other statement.
+
+;;; Code:
+
+
+;;; Requirements
 
 (require 'eieio)
 
@@ -63,16 +73,8 @@
 (let ((load-path (append load-path (list esup-load-path))))
   (require 'esup-child))
 
-
-;; On Emacs 24.3 and below, the `with-slots' macro expands to `symbol-macrolet'
-;; instead of `cl-symbol-macrolet'.
 (eval-when-compile
-  (if (and (<= emacs-major-version 24)
-           (<= emacs-minor-version 3))
-      (require 'cl)
-    (require 'cl-lib)))
-
-;;; Code:
+  (require 'cl-lib))
 
 
 ;; User variables
@@ -157,6 +159,7 @@ Includes execution time, gc time and number of gc pauses."
   "A list of error messages from the child Emacs.")
 
 
+
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (cl-loop for result in results
