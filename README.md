@@ -19,6 +19,13 @@ older versions of Emacs, but this is NOT guaranteed. Bug reports
 for problems related to using Esup with older versions of
 Emacs will most like not be addressed.
 
+The master of all the material is the Git repository at
+http://github.com/jschaf/esup .
+
+NOTE: The `master` branch will always contain the latest _unstable_ version.
+If you wish to check older versions or formal, tagged release, please switch
+to the relevant [tag][esup tags].
+
 **With MELPA**
 
 First, add the package repository:
@@ -106,3 +113,4 @@ Create a pull request with the normal Github user interface.
 [melpa link]: http://melpa.org/#/esup
 [melpa-s badge]: https://stable.melpa.org/packages/esup-badge.svg
 [melpa-s link]: https://stable.melpa.org/#/esup
+[esup tags]: http://github.com/jschaf/esup/tags

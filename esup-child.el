@@ -1,22 +1,31 @@
 ;;; esup-child.el --- lisp file for child Emacs to run. -*- lexical-binding: t -*-
+
 ;; Copyright (C) 2014-2017 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
-;; Version: 0.6
-;; Keywords:  convenience
+;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
+;; Created: 19 May 2013
+;; Version: 0.7.1
+;; URL: http://github.com/jschaf/esup
+;; Keywords: convenience, processes
+;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 
-;; This program is free software; you can redistribute it and/or modify
-;; it under the terms of the GNU General Public License as published by
-;; the Free Software Foundation, either version 3 of the License, or
-;; (at your option) any later version.
+;; This file is NOT part of GNU Emacs.
 
-;; This program is distributed in the hope that it will be useful,
+;;;; License
+
+;; This file is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License
+;; as published by the Free Software Foundation; either version 3
+;; of the License, or (at your option) any later version.
+
+;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
 ;; You should have received a copy of the GNU General Public License
-;; along with this program.  If not, see <http://www.gnu.org/licenses/>.
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -400,15 +409,15 @@ We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
   (concat
    "(esup-result (when (<= emacs-major-version 25) \"esup-result\") "
    (format ":file %s "
-           (prin1-to-string (oref esup-result :file)))
-   (format ":start-point %d " (oref esup-result :start-point))
-   (format ":line-number %d " (oref esup-result :line-number))
+           (prin1-to-string (slot-value esup-result 'file)))
+   (format ":start-point %d " (slot-value esup-result 'start-point))
+   (format ":line-number %d " (slot-value esup-result 'line-number))
    (format ":expression-string %s "
-           (prin1-to-string (oref esup-result :expression-string)))
-   (format ":end-point %d " (oref esup-result :end-point))
-   (format ":exec-time %f " (oref esup-result :exec-time))
-   (format ":gc-number %d " (oref esup-result :gc-number))
-   (format ":gc-time %f" (oref esup-result :gc-time))
+           (prin1-to-string (slot-value esup-result 'expression-string)))
+   (format ":end-point %d " (slot-value esup-result 'end-point))
+   (format ":exec-time %f " (slot-value esup-result 'exec-time))
+   (format ":gc-number %d " (slot-value esup-result 'gc-number))
+   (format ":gc-time %f" (slot-value esup-result 'gc-time))
    ")"))
 
 (defun esup-child-serialize-results (esup-results)

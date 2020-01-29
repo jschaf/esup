@@ -3,51 +3,74 @@
 ;; Copyright (C) 2014-2017 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
-;; Maintainer:  Joe Schafer <joe@jschaf.com>
+;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
 ;; Created: 19 May 2013
+;; Version: 0.7.1
 ;; URL: http://github.com/jschaf/esup
-;; Version:  0.7
-;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 ;; Keywords: convenience, processes
+;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
 
 ;; This file is NOT part of GNU Emacs.
 
-;; This program is free software; you can redistribute it and/or
+;;;; License
+
+;; This file is free software; you can redistribute it and/or
 ;; modify it under the terms of the GNU General Public License
-;; as published by the Free Software Foundation; either version 2
+;; as published by the Free Software Foundation; either version 3
 ;; of the License, or (at your option) any later version.
-;;
-;; This program is distributed in the hope that it will be useful,
+
+;; This file is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 
-;;; Installation:
+;; You should have received a copy of the GNU General Public License
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
+
+;;; Commentary:
+
+;; `esup' profiles your Emacs startup time by examining all top-level
+;; S-expressions (sexps).  `esup' starts a new Emacs process from
+;; Emacs to profile each SEXP.  After the profiled Emacs is complete,
+;; it will exit and your Emacs will display the results.
 ;;
-;; Place esup.el on your `load-path' by adding this to your
-;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
+;; `esup' will step into `require' and `load' forms at the top level
+;; of a file, but not if they're enclosed in any other statement.
 ;;
-;; (add-to-list 'load-path "~/dir/to-esup")
+;; Installation:
+;;
+;; Place esup.el and esup-child.el on your `load-path' by adding this
+;; to your `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
+;;
+;;   (add-to-list 'load-path "~/dir/to-esup")
 ;;
 ;; Load the code:
 ;;
-;; (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
+;;   (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ;;
 ;; M-x `esup' to profile your Emacs startup and display the results.
+;;
+;; The master of all the material is the GitHub repository
+;; (see URL `https://github.com/jschaf/esup').
+;;
+;; Bugs:
+;;
+;; Bug tracking is currently handled using the GitHub issue tracker
+;; (see URL `https://github.com/jschaf/esup/issues').
 
-;;; Commentary:
-;;
-;; The most recent code is always at http://github.com/jschaf/esup
-;;
-;; `esup' profiles your Emacs startup time by examining all top-level
-;; S-expressions (sexps).  `esup' starts a new Emacs process from Emacs to
-;; profile each SEXP.  After the profiled Emacs is complete, it will exit and
-;; your Emacs will display the results.
-;;
-;; `esup' will step into `require' and `load' forms at the top level of a file,
-;; but not if they're enclosed in any other statement.
+;;; Code:
+
+
+;;; Requirements
 
 (require 'eieio)
+(require 'esup-child)
+
+(eval-when-compile
+  (require 'cl-lib))
+
+
+;;; Esup internals
 
 (defvar esup-load-path
   ;; Emacs doesn't visit a file when loading it, meaning
@@ -58,24 +81,8 @@
                           buffer-file-name)))
   "Full directory path to esup.el and esup-child.el.")
 
-;; We need to load esup-child to access `esup-result'.  `esup-child' may not be
-;; on the path, so lets add it here.
-(let ((load-path (append load-path (list esup-load-path))))
-  (require 'esup-child))
-
-
-;; On Emacs 24.3 and below, the `with-slots' macro expands to `symbol-macrolet'
-;; instead of `cl-symbol-macrolet'.
-(eval-when-compile
-  (if (and (<= emacs-major-version 24)
-           (<= emacs-minor-version 3))
-      (require 'cl)
-    (require 'cl-lib)))
-
-;;; Code:
-
 
-;; User variables
+;;; User variables
 
 (defgroup esup nil
   "A major mode for the Emacs Start Up Profiler."
@@ -157,37 +164,38 @@ Includes execution time, gc time and number of gc pauses."
   "A list of error messages from the child Emacs.")
 
 
+
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (cl-loop for result in results
-           sum (oref result :exec-time) into total-exec-time
+           sum (slot-value result 'exec-time) into total-exec-time
            finally return total-exec-time))
 
 (defun esup-total-gc-number (results)
   "Calculate the total number of GC pauses of RESULTS."
   (cl-loop for result in results
-           sum (oref result :gc-number) into total-gc-number
+           sum (slot-value result 'gc-number) into total-gc-number
            finally return total-gc-number))
 
 (defun esup-total-gc-time (results)
   "Calculate the total time spent in GC of RESULTS."
   (cl-loop for result in results
-           sum (oref result :gc-time) into total-gc-time
+           sum (slot-value result 'gc-time) into total-gc-time
            finally return total-gc-time))
 
 (defun esup-drop-insignificant-times (results)
   "Remove inconsequential entries and sort RESULTS."
   (cl-delete-if (lambda (a) (< a esup-insignificant-time))
                 results
-                :key #'(lambda (obj) (oref obj :exec-time)))
-  (cl-sort results '> :key #'(lambda (obj) (oref obj :exec-time))))
+                :key #'(lambda (obj) (slot-value obj 'exec-time)))
+  (cl-sort results '> :key #'(lambda (obj) (slot-value obj 'exec-time))))
 
 (defun esup-update-percentages (results)
   "Add the percentage of exec-time to each item in RESULTS."
   (cl-loop for result in results
            with total-time = (esup-total-exec-time results)
            do
-           (oset result :percentage (* 100 (/ (oref result :exec-time)
+           (oset result :percentage (* 100 (/ (slot-value result 'exec-time)
                                               total-time)))))
 
 
@@ -555,16 +563,9 @@ ARGS is a list of extra command line arguments to pass to Emacs."
     (cl-loop for result in results
              do
              (erase-buffer)
-             (insert (oref result :expression-string))
-             ;; font-lock-ensure is new to Emacs 25
-             (if (functionp 'font-lock-ensure)
-                 (font-lock-ensure)
-               ;; Avoid byte-compilation errors.
-               ;; `font-lock-fontify-buffer' is marked as interactive
-               ;; only in Emacs 25.
-               (with-no-warnings
-                 (font-lock-fontify-buffer)))
-             (oset result :expression-string (buffer-string)))
+             (insert (slot-value result 'expression-string))
+	     (font-lock-ensure)
+	     (setf (slot-value result 'expression-string) (buffer-string)))
     results))
 
 (defun esup-read-result (start-point)
@@ -575,9 +576,12 @@ Returns either a class `esup-result' or nil."
   (eval (read (current-buffer))))
 
 (defun esup-next-separator-end-point ()
-  "Return the end point of the next `esup-child-result-separator'."
-  (save-excursion (search-forward esup-child-result-separator
-                                  (point-max) 'noerror)))
+  "Return the end point of the next `esup-child-result-separator'.
+Returns either an point or nil if `esup-child-result-separator' isn't bounded in
+current lexical context."
+  (when (boundp 'esup-child-result-separator)
+    (save-excursion (search-forward esup-child-result-separator
+                                    (point-max) 'noerror))))
 
 (defun esup-read-results ()
   "Read all `esup-result' objects from `esup-incoming-results-buffer'."
