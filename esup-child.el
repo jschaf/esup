@@ -409,15 +409,15 @@ We need this because `prin1-to-string' isn't stable between Emacs 25 and 26."
   (concat
    "(esup-result (when (<= emacs-major-version 25) \"esup-result\") "
    (format ":file %s "
-           (prin1-to-string (oref esup-result :file)))
-   (format ":start-point %d " (oref esup-result :start-point))
-   (format ":line-number %d " (oref esup-result :line-number))
+           (prin1-to-string (slot-value esup-result 'file)))
+   (format ":start-point %d " (slot-value esup-result 'start-point))
+   (format ":line-number %d " (slot-value esup-result 'line-number))
    (format ":expression-string %s "
-           (prin1-to-string (oref esup-result :expression-string)))
-   (format ":end-point %d " (oref esup-result :end-point))
-   (format ":exec-time %f " (oref esup-result :exec-time))
-   (format ":gc-number %d " (oref esup-result :gc-number))
-   (format ":gc-time %f" (oref esup-result :gc-time))
+           (prin1-to-string (slot-value esup-result 'expression-string)))
+   (format ":end-point %d " (slot-value esup-result 'end-point))
+   (format ":exec-time %f " (slot-value esup-result 'exec-time))
+   (format ":gc-number %d " (slot-value esup-result 'gc-number))
+   (format ":gc-time %f" (slot-value esup-result 'gc-time))
    ")"))
 
 (defun esup-child-serialize-results (esup-results)

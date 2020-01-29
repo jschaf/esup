@@ -163,34 +163,34 @@ Includes execution time, gc time and number of gc pauses."
 (defun esup-total-exec-time (results)
   "Calculate the total execution time of RESULTS."
   (cl-loop for result in results
-           sum (oref result :exec-time) into total-exec-time
+           sum (slot-value result 'exec-time) into total-exec-time
            finally return total-exec-time))
 
 (defun esup-total-gc-number (results)
   "Calculate the total number of GC pauses of RESULTS."
   (cl-loop for result in results
-           sum (oref result :gc-number) into total-gc-number
+           sum (slot-value result 'gc-number) into total-gc-number
            finally return total-gc-number))
 
 (defun esup-total-gc-time (results)
   "Calculate the total time spent in GC of RESULTS."
   (cl-loop for result in results
-           sum (oref result :gc-time) into total-gc-time
+           sum (slot-value result 'gc-time) into total-gc-time
            finally return total-gc-time))
 
 (defun esup-drop-insignificant-times (results)
   "Remove inconsequential entries and sort RESULTS."
   (cl-delete-if (lambda (a) (< a esup-insignificant-time))
                 results
-                :key #'(lambda (obj) (oref obj :exec-time)))
-  (cl-sort results '> :key #'(lambda (obj) (oref obj :exec-time))))
+                :key #'(lambda (obj) (slot-value obj 'exec-time)))
+  (cl-sort results '> :key #'(lambda (obj) (slot-value obj 'exec-time))))
 
 (defun esup-update-percentages (results)
   "Add the percentage of exec-time to each item in RESULTS."
   (cl-loop for result in results
            with total-time = (esup-total-exec-time results)
            do
-           (oset result :percentage (* 100 (/ (oref result :exec-time)
+           (oset result :percentage (* 100 (/ (slot-value result 'exec-time)
                                               total-time)))))
 
 
@@ -558,16 +558,9 @@ ARGS is a list of extra command line arguments to pass to Emacs."
     (cl-loop for result in results
              do
              (erase-buffer)
-             (insert (oref result :expression-string))
-             ;; font-lock-ensure is new to Emacs 25
-             (if (functionp 'font-lock-ensure)
-                 (font-lock-ensure)
-               ;; Avoid byte-compilation errors.
-               ;; `font-lock-fontify-buffer' is marked as interactive
-               ;; only in Emacs 25.
-               (with-no-warnings
-                 (font-lock-fontify-buffer)))
-             (oset result :expression-string (buffer-string)))
+             (insert (slot-value result 'expression-string))
+	     (font-lock-ensure)
+	     (setf (slot-value result 'expression-string) (buffer-string)))
     results))
 
 (defun esup-read-result (start-point)
@@ -578,9 +571,12 @@ Returns either a class `esup-result' or nil."
   (eval (read (current-buffer))))
 
 (defun esup-next-separator-end-point ()
-  "Return the end point of the next `esup-child-result-separator'."
-  (save-excursion (search-forward esup-child-result-separator
-                                  (point-max) 'noerror)))
+  "Return the end point of the next `esup-child-result-separator'.
+Returns either an point or nil if `esup-child-result-separator' isn't bounded in
+current lexical context."
+  (when (boundp 'esup-child-result-separator)
+    (save-excursion (search-forward esup-child-result-separator
+                                    (point-max) 'noerror))))
 
 (defun esup-read-results ()
   "Read all `esup-result' objects from `esup-incoming-results-buffer'."

@@ -60,7 +60,7 @@ build: $(OBJS)
 .PHONY: clean
 clean:
 	$(info Remove all byte compiled Elisp files...)
-	@$(CASK) clean-elc
+	@$(RM) -f $(OBJS)
 
 .PHONY: help
 help: .title
