@@ -30,27 +30,33 @@
 ;;; Commentary:
 
 ;; `esup' profiles your Emacs startup time by examining all top-level
-;; S-expressions (sexps).  `esup' starts a new Emacs process from Emacs to
-;; profile each SEXP.  After the profiled Emacs is complete, it will exit and
-;; your Emacs will display the results.
+;; S-expressions (sexps).  `esup' starts a new Emacs process from
+;; Emacs to profile each SEXP.  After the profiled Emacs is complete,
+;; it will exit and your Emacs will display the results.
 ;;
-;; `esup' will step into `require' and `load' forms at the top level of a file,
-;; but not if they're enclosed in any other statement.
+;; `esup' will step into `require' and `load' forms at the top level
+;; of a file, but not if they're enclosed in any other statement.
 ;;
 ;; Installation:
 ;;
-;; Place esup.el on your `load-path' by adding this to your
-;; `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
+;; Place esup.el and esup-child.el on your `load-path' by adding this
+;; to your `user-init-file', usually ~/.emacs or ~/.emacs.d/init.el
 ;;
-;; (add-to-list 'load-path "~/dir/to-esup")
+;;   (add-to-list 'load-path "~/dir/to-esup")
 ;;
 ;; Load the code:
 ;;
-;; (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
+;;   (autoload 'esup "esup" "Emacs Start Up Profiler." nil)
 ;;
 ;; M-x `esup' to profile your Emacs startup and display the results.
 ;;
-;; The most recent code is always at http://github.com/jschaf/esup
+;; The master of all the material is the GitHub repository
+;; (see URL `https://github.com/jschaf/esup').
+;;
+;; Bugs:
+;;
+;; Bug tracking is currently handled using the GitHub issue tracker
+;; (see URL `https://github.com/jschaf/esup/issues').
 
 ;;; Code:
 
@@ -58,6 +64,13 @@
 ;;; Requirements
 
 (require 'eieio)
+(require 'esup-child)
+
+(eval-when-compile
+  (require 'cl-lib))
+
+
+;;; Esup internals
 
 (defvar esup-load-path
   ;; Emacs doesn't visit a file when loading it, meaning
@@ -68,16 +81,8 @@
                           buffer-file-name)))
   "Full directory path to esup.el and esup-child.el.")
 
-;; We need to load esup-child to access `esup-result'.  `esup-child' may not be
-;; on the path, so lets add it here.
-(let ((load-path (append load-path (list esup-load-path))))
-  (require 'esup-child))
-
-(eval-when-compile
-  (require 'cl-lib))
-
 
-;; User variables
+;;; User variables
 
 (defgroup esup nil
   "A major mode for the Emacs Start Up Profiler."
