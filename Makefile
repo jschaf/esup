@@ -9,7 +9,6 @@ CASK ?= cask
 EMACSFLAGS ?=
 TESTFLAGS ?= --reporter ert+duration
 
-PKGDIR =
 VERSION = undefined
 
 .DEFAULT_GOAL = build
@@ -31,7 +30,6 @@ ifndef HAVE_CASK
 $(warning "$(CASK) is not available.  Please run make help")
 RUNEMACS = $(EMACSBATCH)
 else
-PKGDIR = $(shell EMACS=$(EMACS) $(CASK) package-directory)
 RUNEMACS = $(CASK) exec $(EMACSBATCH)
 VERSION = $(shell $(CASK) version)
 endif
@@ -39,12 +37,8 @@ endif
 # TODO(serghei): Add byte compile test
 # --eval '(setq byte-compile-error-on-warn t)'
 # See: https://github.com/jschaf/esup/issues/68
-%.elc: %.el $(PKGDIR)
-	$(RUNEMACS) -f batch-byte-compile $<
-
-$(PKGDIR): Cask
-	$(CASK) install
-	@touch $(PKGDIR)
+%.elc: %.el
+	@$(RUNEMACS) -f batch-byte-compile $<
 
 ## Public targets
 
@@ -53,18 +47,20 @@ $(PKGDIR): Cask
 	$(info Esup $(VERSION))
 
 .PHONY: init
-init: $(PKGDIR)
+init: Cask
+	@@$(CASK) install
 
 .PHONY: test
 test:
-	$(CASK) exec ert-runner $(TESTFLAGS)
+	@$(CASK) exec ert-runner $(TESTFLAGS)
 
 .PHONY: build
 build: $(OBJS)
 
 .PHONY: clean
 clean:
-	$(CASK) clean-elc
+	$(info Remove all byte compiled Elisp files...)
+	@$(CASK) clean-elc
 
 .PHONY: help
 help: .title
