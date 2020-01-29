@@ -34,11 +34,8 @@ RUNEMACS = $(CASK) exec $(EMACSBATCH)
 VERSION = $(shell $(CASK) version)
 endif
 
-# TODO(serghei): Add byte compile test
-# --eval '(setq byte-compile-error-on-warn t)'
-# See: https://github.com/jschaf/esup/issues/68
 %.elc: %.el
-	@$(RUNEMACS) -f batch-byte-compile $<
+	@$(RUNEMACS) --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $<
 
 ## Public targets
 
