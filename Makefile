@@ -45,7 +45,7 @@ endif
 
 .PHONY: init
 init: Cask
-	@@$(CASK) install
+	@$(CASK) install
 
 .PHONY: test
 test:
