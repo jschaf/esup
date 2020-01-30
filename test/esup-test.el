@@ -7,10 +7,7 @@
 ;;; Code:
 
 (eval-when-compile
-  (if (and (<= emacs-major-version 24)
-           (<= emacs-minor-version 3))
-      (require 'cl)
-    (require 'cl-lib)))
+  (require 'cl-lib))
 
 (require 'esup-child)
 (require 'noflet)
