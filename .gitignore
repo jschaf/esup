@@ -10,3 +10,6 @@
 
 # Directories to ignore (do not add trailing '/'s, they skip symlinks).
 /.cask
+
+# Code coverage report.
+coverage-final.json

@@ -1,47 +1,15 @@
-## Sane defaults
-
-SHELL := $(shell which bash)
-ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
-EMACS ?= emacs
-CASK ?= cask
-
-EMACSFLAGS ?=
-TESTFLAGS ?= --reporter ert+duration
-
-VERSION = undefined
-
-.DEFAULT_GOAL = build
-
-## File lists
-
-SRCS = esup-child.el esup.el
-OBJS = $(SRCS:.el=.elc)
-
-## Internal variables
-
-EMACSBATCH = $(EMACS) -Q --batch -L . $(EMACSFLAGS)
-RUNEMACS =
-
-## Program availability
-
-HAVE_CASK := $(shell sh -c "command -v $(CASK)")
-ifndef HAVE_CASK
-$(warning "$(CASK) is not available.  Please run make help")
-RUNEMACS = $(EMACSBATCH)
-else
-RUNEMACS = $(CASK) exec $(EMACSBATCH)
-VERSION = $(shell $(CASK) version)
-endif
+include default.mk
 
 %.elc: %.el
-	@$(RUNEMACS) --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $<
+	@printf "Compiling $<\n"
+	@$(RUNEMACS) --eval '(setq byte-compile-error-on-warn t)' \
+		-f batch-byte-compile $<
 
 ## Public targets
 
 .PHONY: .title
 .title:
-	$(info Esup $(VERSION))
+	@echo Esup $(VERSION)
 
 .PHONY: init
 init: Cask
@@ -49,7 +17,7 @@ init: Cask
 
 .PHONY: test
 test:
-	@$(CASK) exec ert-runner $(TESTFLAGS)
+	@$(CASK) exec buttercup $(TESTFLAGS)
 
 .PHONY: build
 build: $(OBJS)
@@ -57,7 +25,7 @@ build: $(OBJS)
 .PHONY: clean
 clean:
 	$(info Remove all byte compiled Elisp files...)
-	@$(RM) -f $(OBJS)
+	@$(CASK) clean-elc
 
 .PHONY: help
 help: .title

@@ -8,6 +8,7 @@
 
 (development
  (depends-on "dash")
- (depends-on "ert-runner")
+ (depends-on "buttercup")
+ (depends-on "undercover")
  (depends-on "el-mock")
  (depends-on "noflet"))
