@@ -41,13 +41,6 @@
   "Enable debug messages for the test utilities.
 Also sends all esup-child log messages to stdout.")
 
-(when (require 'undercover nil t)
-  ;; Track coverage, but don't send to coverage serivice.  Save in parent
-  ;; directory as undercover saves paths relative to the repository root.
-  (undercover "*.el"
-              (:report-file "coverage-final.json")
-              (:send-report nil)))
-
 (let* ((current-file (if load-in-progress load-file-name (buffer-file-name)))
        (source-directory (locate-dominating-file current-file "Cask"))
        ;; Don't load old byte-compiled versions
