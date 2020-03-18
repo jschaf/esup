@@ -49,7 +49,8 @@
   (it "counts gc"
     (with-esup-mock
      '(:load-path ("/fake")
-       :files (("/fake/bar-qux.el" . "(progn (garbage-collect) (garbage-collect))")))
+       :files (("/fake/bar-qux.el" . (concat "(progn (garbage-collect) "
+                                             "(garbage-collect))"))))
 
      (should
       (esup-results-equal-p
@@ -71,128 +72,133 @@
        '(:gc-time :exec-time)
        (esup-child-run "qux.el" esup-test/fake-port)
        (list
-	(make-esup-result "/fake2/baz.el" "(progn 'baz)")
-	(make-esup-result "/fake2/qux.el" "(progn 'qux)"
-                          :start-point 16 :end-point 28)))))))
+        (make-esup-result "/fake2/baz.el" "(progn 'baz)")
+        (make-esup-result "/fake2/qux.el" "(progn 'qux)"
+                          :start-point 16 :end-point 28))))))
 
-;; (ert-deftest esup-child-run__steps-into-requires()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake3")
-;;      :files (("/fake3/qux.el" . "(require 'baz)")
-;;              ("/fake3/baz.el" . "(progn 'baz)")))
+  (it "steps into requires"
+      (with-esup-mock
+       '(:load-path ("/fake3")
+         :files (("/fake3/qux.el" . "(require 'baz)")
+                 ("/fake3/baz.el" . "(progn 'baz)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "qux.el" esup-test/fake-port)
-;;      (list
-;;       (make-esup-result "/fake3/baz.el" "(progn 'baz)"))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "qux.el" esup-test/fake-port)
+         (list
+          (make-esup-result "/fake3/baz.el" "(progn 'baz)"))))))
 
-;; (ert-deftest esup-child-run__handles-dynamic-docstring()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake1")
-;;      :files (("/fake1/qux.el" . "#@2 A\n(defvar var 1)")))
+  (it "handles dynamic docstring"
+      (with-esup-mock
+       '(:load-path ("/fake1")
+         :files (("/fake1/qux.el" . "#@2 A\n(defvar var 1)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "qux.el" esup-test/fake-port)
-;;      (list
-;;       (make-esup-result "/fake1/qux.el" "(defvar var 1)"
-;;                         :start-point 7 :end-point 21 :line-number 2))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "qux.el" esup-test/fake-port)
+         (list
+          (make-esup-result "/fake1/qux.el" "(defvar var 1)"
+                            :start-point 7 :end-point 21 :line-number 2))))))
 
-;; (ert-deftest esup-child-run__respects-require-level-of-1 ()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake8")
-;;      :files (("/fake8/a.el" . "(require 'c)")
-;;              ("/fake8/c.el" . "(require 'd)")
-;;              ("/fake8/d.el" . "(progn 'd)")))
+  (it "respects require level of 1"
+      (with-esup-mock
+       '(:load-path ("/fake8")
+         :files (("/fake8/a.el" . "(require 'c)")
+                 ("/fake8/c.el" . "(require 'd)")
+                 ("/fake8/d.el" . "(progn 'd)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (let ((depth 1))
-;;        (esup-child-run "a.el" esup-test/fake-port depth))
-;;      (list
-;;       (make-esup-result "/fake8/c.el" "(require 'd)"))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (let ((depth 1))
+           (esup-child-run "a.el" esup-test/fake-port depth))
+         (list
+          (make-esup-result "/fake8/c.el" "(require 'd)"))))))
 
-;; (ert-deftest esup-child-run__respects-require-level-of-2 ()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake9")
-;;      :files (("/fake9/a.el" . "(require 'c)")
-;;              ("/fake9/c.el" . "(require 'd)")
-;;              ("/fake9/d.el" . "(progn 'd)")))
+  (it "respects require level of 2"
+      (with-esup-mock
+       '(:load-path ("/fake9")
+         :files (("/fake9/a.el" . "(require 'c)")
+                 ("/fake9/c.el" . "(require 'd)")
+                 ("/fake9/d.el" . "(progn 'd)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (let ((depth 2))
-;;        (esup-child-run "a.el" esup-test/fake-port depth))
-;;      (list
-;;       (make-esup-result "/fake9/d.el" "(progn 'd)"))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (let ((depth 2))
+           (esup-child-run "a.el" esup-test/fake-port depth))
+         (list
+          (make-esup-result "/fake9/d.el" "(progn 'd)"))))))
 
-;; (ert-deftest esup-child-run__handles_require_with_sexp_filename ()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake10")
-;;      :files
-;;      (("/fake10/bar.el" . "(require 'core (concat \"/specified/qux/\" \"core\"))")
-;;       ("/specified/qux/core.el" . "(progn 'core)")))
+  (it "handles require with sexp filename"
+      (with-esup-mock
+       '(:load-path ("/fake10")
+         :files
+         (("/fake10/bar.el" . (concat "(require 'core "
+                                      "(concat \"/specified/qux/\" \"core\"))"))
+          ("/specified/qux/core.el" . "(progn 'core)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "/fake10/bar.el" esup-test/fake-port)
-;;      (list (make-esup-result "/specified/qux/core.el" "(progn 'core)"))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "/fake10/bar.el" esup-test/fake-port)
+         (list (make-esup-result "/specified/qux/core.el" "(progn 'core)"))))))
 
-;; (ert-deftest esup-child-run__doesnt_step_into_already_required_feature()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake12")
-;;      :files (("/fake12/qux.el" . "(require 'baz) (require 'baz)")
-;;              ("/fake12/baz.el" . "(progn 'baz) (provide 'baz)")))
+  (it "doesn't step into already required feature"
+      (with-esup-mock
+       '(:load-path ("/fake12")
+         :files (("/fake12/qux.el" . "(require 'baz) (require 'baz)")
+                 ("/fake12/baz.el" . "(progn 'baz) (provide 'baz)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "qux.el" esup-test/fake-port)
-;;      (list
-;;       (make-esup-result "/fake12/baz.el" "(progn 'baz)")
-;;       (make-esup-result "/fake12/baz.el" "(provide 'baz)"
-;;                         :start-point 14 :end-point 28)
-;;       (make-esup-result "/fake12/qux.el" "(require 'baz)"
-;;                         :start-point 16 :end-point 30))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "qux.el" esup-test/fake-port)
+         (list
+          (make-esup-result "/fake12/baz.el" "(progn 'baz)")
+          (make-esup-result "/fake12/baz.el" "(provide 'baz)"
+                            :start-point 14 :end-point 28)
+          (make-esup-result "/fake12/qux.el" "(require 'baz)"
+                            :start-point 16 :end-point 30))))))
 
-;; (ert-deftest esup-child-run__advises_require()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake13")
-;;      :files (("/fake13/qux.el" . "(defun my-require (feat) (require feat)) (my-require 'baz)")
-;;              ("/fake13/baz.el" . "(progn 'baz) (provide 'baz)")))
+  (it "advises require"
+      (with-esup-mock
+       '(:load-path ("/fake13")
+         :files (("/fake13/qux.el" . (concat"(defun my-require (feat)"
+                                            "(require feat))(my-require 'baz)"))
+                 ("/fake13/baz.el" . "(progn 'baz) (provide 'baz)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "qux.el" esup-test/fake-port)
-;;      (list
-;;       (make-esup-result "/fake13/qux.el" "(defun my-require (feat) (require feat))")
-;;       (make-esup-result "/fake13/baz.el" "(progn 'baz)")
-;;       (make-esup-result "/fake13/baz.el" "(provide 'baz)"
-;;                         :start-point 14 :end-point 28))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "qux.el" esup-test/fake-port)
+         (list
+          (make-esup-result "/fake13/qux.el"
+                            "(defun my-require (feat) (require feat))")
+          (make-esup-result "/fake13/baz.el" "(progn 'baz)")
+          (make-esup-result "/fake13/baz.el" "(provide 'baz)"
+                            :start-point 14 :end-point 28))))))
 
-;; (ert-deftest esup-child-run__advises_load()
-;;   (with-esup-mock
-;;    '(:load-path ("/fake14")
-;;      :files
-;;      (("/fake14/qux.el" . "(defun my-load (file) (load file)) (my-load \"baz\")")
-;;       ("/fake14/baz.el" . "(progn 'baz) (provide 'baz)")))
+  (it "advises load"
+      (with-esup-mock
+       '(:load-path ("/fake14")
+         :files
+         (("/fake14/qux.el" . (concat "(defun my-load (file) (load file))"
+                                      "(my-load \"baz\")"))
+          ("/fake14/baz.el" . "(progn 'baz) (provide 'baz)")))
 
-;;    (should
-;;     (esup-results-equal-p
-;;      '(:gc-time :exec-time)
-;;      (esup-child-run "qux.el" esup-test/fake-port)
-;;      (list
-;;       (make-esup-result "/fake14/qux.el" "(defun my-load (file) (load file))")
-;;       (make-esup-result "/fake14/baz.el" "(progn 'baz)")
-;;       (make-esup-result "/fake14/baz.el" "(provide 'baz)"
-;;                         :start-point 14 :end-point 28))))))
+       (should
+        (esup-results-equal-p
+         '(:gc-time :exec-time)
+         (esup-child-run "qux.el" esup-test/fake-port)
+         (list
+          (make-esup-result "/fake14/qux.el"
+                            "(defun my-load (file) (load file))")
+          (make-esup-result "/fake14/baz.el" "(progn 'baz)")
+          (make-esup-result "/fake14/baz.el" "(provide 'baz)"
+                            :start-point 14 :end-point 28)))))))
 
 ;; 
 ;; ;; Test Utilities
