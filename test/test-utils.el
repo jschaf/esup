@@ -82,4 +82,67 @@
                    (list (make-esup-result "file" "sexp2")))))
       (expect result :to-be nil))))
 
+(describe "Calling esup-results-single-equal-p to compare esup-result objects"
+  (it "eaqual when ignoring slots are absent"
+    (should
+     (esup-results-single-equal-p
+      '()
+      (make-esup-result "/fake/file-1.el" "(progn 'file-1)")
+      (make-esup-result "/fake/file-1.el" "(progn 'file-1)"))))
+
+  (it "equal when ignoring :gc-time"
+    (should
+     (esup-results-single-equal-p
+      '(:gc-time)
+      (esup-result
+       :file "file" :expression-string "sexp" :end-point 20 :gc-time 444)
+      (esup-result
+       :file "file" :expression-string "sexp" :end-point 20 :gc-time 555))))
+
+  (it "NOT equal when sexps are mismatch (I)"
+    (let ((result (esup-results-single-equal-p
+                   '()
+                   (make-esup-result "/fake/file-1.el" "(progn 'file-1)")
+                   (make-esup-result "/fake/file-1.el" "(progn 'file-2)"))))
+      (expect result :to-be nil)))
+
+  (it "NOT equal when sexps are mismatch (II)"
+    (let ((result-a (esup-result :file "file" :expression-string "sexp"))
+          (result-b (esup-result :file "file" :expression-string "sexp2")))
+      (expect (esup-results-single-equal-p '() result-a result-b)
+              :to-be nil)))
+
+  (it "NOT equal when :gc-time is mismatch"
+    (let ((result-a (esup-result
+                    :file "file"
+                    :expression-string "sexp"
+                    :end-point 20
+                    :gc-time 444))
+          (result-b (esup-result
+                    :file "file"
+                    :expression-string "sexp"
+                    :end-point 20
+                    :gc-time 555)))
+      (expect (esup-results-single-equal-p '() result-a result-b)
+              :to-be nil))))
+
+(describe "Making esup-result objects"
+  (it "create the same object with NO extra args"
+    (let((actual (make-esup-result "file" "sexp"))
+         (expected (esup-result
+                    :file "file"
+                    :expression-string "sexp"
+                    :end-point 5)))
+      (expect actual :to-equal expected)))
+
+  (it "create the same object with extra args"
+    (let ((actual (make-esup-result "file" "sexp" :gc-time 20 :exec-time 40))
+          (expected (esup-result
+                     :file "file"
+                     :expression-string "sexp"
+                     :end-point 5
+                     :gc-time 20
+                     :exec-time 40)))
+      (expect actual :to-equal expected))))
+
 ;;; test-utils.el ends here

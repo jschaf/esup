@@ -70,7 +70,7 @@ In addition apply rest ARGS if any."
    args))
 
 (defun esup-test--all-slots ()
-  "Return a list of all slots for an `esup-result'."
+  "Return a list of all possible slots for an `esup-result'."
   (--map (intern (concat ":" (symbol-name it)))
          (object-slots (make-instance 'esup-result))))
 
@@ -82,14 +82,14 @@ Create a new list with only the members of IGNORING-SLOTS that are not in
 
 (defun esup-results-single-equal-p (ignoring-slots a b)
   "Compare `esup-result' objects with an IGNORING-SLOTS.
-A test for equality of A and B is performed by using `eq' defun."
+A test for equality of A and B objects is performed by using `eq' defun."
   (--all? (not (null it))
           (--map (equal (eieio-oref a it) (eieio-oref b it))
                  (esup-test--slots-to-compare ignoring-slots))))
 
 (defun esup-results-equal-p (ignoring-slots a b)
   "Compare a list of `esup-result' objects with an IGNORING-SLOTS.
-A test for equality of A and B is performed by using `eq' defun."
+A test for equality of A and B objects is performed by using `eq' defun."
   (and
    (eq (length a) (length b))
    (--all? (not (null it))
