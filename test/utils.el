@@ -1,6 +1,6 @@
 ;;; utils.el --- Esup: Non-interactive unit-test setup -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017, 2018, 2019, 2020 Serghei Iakovlev
+;; Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020 Joe Schafer
 
 ;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
