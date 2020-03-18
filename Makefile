@@ -62,5 +62,5 @@ help: .title
 	@echo '  $(CASK): $(if $(HAVE_CASK),yes,no)'
 	@echo ''
 	@echo 'You need $(CASK) to develop and test Esup.'
-	@echo 'See http://cask.readthedocs.io/ for more.'
+	@echo 'See https://cask.readthedocs.io/ for more.'
 	@echo ''

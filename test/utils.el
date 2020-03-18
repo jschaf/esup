@@ -5,7 +5,7 @@
 ;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
 ;; Version: 0.7.1
-;; URL: http://github.com/jschaf/esup
+;; URL: https://github.com/jschaf/esup
 
 ;; This file is NOT part of GNU Emacs.
 
