@@ -59,8 +59,8 @@ Also sends all esup-child log messages to stdout.")
        (load-prefer-newer t))
   ;; Load the file under test
   (add-to-list 'load-path source-directory)
-  (load (expand-file-name "esup"))
-  (load (expand-file-name "esup-child")))
+  (load (expand-file-name "esup") nil 'nomessage)
+  (load (expand-file-name "esup-child") nil 'nomessage))
 
 ;;;; Utulity:
 

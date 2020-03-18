@@ -1,4 +1,28 @@
-;;; test-esup.el --- Tests for esup -*- lexical-binding: t -*-
+;;; test-esup.el --- ESUP: Tests for esup.el and esup-child.el -*- lexical-binding: t -*-
+
+;; Copyright (C) 2014-2017 Joe Schafer
+
+;; Author: Joe Schafer <joe@jschaf.com>
+;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
+;; Version: 0.7.
+;; URL: http://github.com/jschaf/esup
+
+;; This file is NOT part of GNU Emacs.
+
+;;;; License
+
+;; This file is free software; you can redistribute it and/or
+;; modify it under the terms of the GNU General Public License
+;; as published by the Free Software Foundation; either version 3
+;; of the License, or (at your option) any later version.
+
+;; This file is distributed in the hope that it will be useful,
+;; but WITHOUT ANY WARRANTY; without even the implied warranty of
+;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;; GNU General Public License for more details.
+
+;; You should have received a copy of the GNU General Public License
+;; along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
 ;;; Commentary:
 
@@ -49,8 +73,8 @@
   (it "counts gc"
     (with-esup-mock
      '(:load-path ("/fake")
-       :files (("/fake/bar-qux.el" . (concat "(progn (garbage-collect) "
-                                             "(garbage-collect))"))))
+       :files (("/fake/bar-qux.el" .
+                "(progn (garbage-collect) (garbage-collect))")))
 
      (should
       (esup-results-equal-p
@@ -136,8 +160,8 @@
       (with-esup-mock
        '(:load-path ("/fake10")
          :files
-         (("/fake10/bar.el" . (concat "(require 'core "
-                                      "(concat \"/specified/qux/\" \"core\"))"))
+         (("/fake10/bar.el" .
+           "(require 'core (concat \"/specified/qux/\" \"core\"))")
           ("/specified/qux/core.el" . "(progn 'core)")))
 
        (should
@@ -166,8 +190,8 @@
   (it "advises require"
       (with-esup-mock
        '(:load-path ("/fake13")
-         :files (("/fake13/qux.el" . (concat"(defun my-require (feat)"
-                                            "(require feat))(my-require 'baz)"))
+         :files (("/fake13/qux.el" .
+                  "(defun my-require (feat) (require feat))(my-require 'baz)")
                  ("/fake13/baz.el" . "(progn 'baz) (provide 'baz)")))
 
        (should
@@ -185,8 +209,8 @@
       (with-esup-mock
        '(:load-path ("/fake14")
          :files
-         (("/fake14/qux.el" . (concat "(defun my-load (file) (load file))"
-                                      "(my-load \"baz\")"))
+         (("/fake14/qux.el" .
+           "(defun my-load (file) (load file)) (my-load \"baz\")")
           ("/fake14/baz.el" . "(progn 'baz) (provide 'baz)")))
 
        (should
