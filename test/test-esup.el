@@ -43,7 +43,7 @@
 ;; causes it to bleed into other tests.  For a quick fix, don't use
 ;; the same directory.
 
-(describe "Child run"
+(describe "The esup-child-run during performing"
   (it "loads file"
     (with-esup-mock
      '(:load-path ("/fake")
@@ -287,53 +287,6 @@
 
 ;; 
 ;; ;; Test Utility Tests
-
-;; (ert-deftest esup-results-equal-p__empty-list__is-equal ()
-;;   (should
-;;    (esup-results-equal-p '() '() '())))
-
-;; (ert-deftest esup-results-equal-p__single-elem__is-equal ()
-;;   (should
-;;    (esup-results-equal-p
-;;     '()
-;;     (list (make-esup-result "file" "sexp"))
-;;     (list (make-esup-result "file" "sexp")))))
-
-;; (ert-deftest esup-results-equal-p__three-elem__is-equal ()
-;;   (should
-;;    (esup-results-equal-p
-;;     '()
-;;     (list
-;;      (make-esup-result "file1" "sexp1" :start-point 10)
-;;      (make-esup-result "file2" "sexp2" :gc-time 20)
-;;      (make-esup-result "file3" "sexp3"))
-;;     (list
-;;      (make-esup-result "file1" "sexp1" :start-point 10)
-;;      (make-esup-result "file2" "sexp2" :gc-time 20)
-;;      (make-esup-result "file3" "sexp3")))))
-
-;; (ert-deftest esup-results-equal-p__ignoring-gc-time__is-equal ()
-;;   (should
-;;    (esup-results-equal-p
-;;     '(:gc-time)
-;;     (list (make-esup-result "file" "sexp" :gc-time 30))
-;;     (list (make-esup-result "file" "sexp" :gc-time 50)))))
-
-;; (ert-deftest esup-results-equal-p__gc-time-mismatch__is-false ()
-;;   (should
-;;    (not
-;;     (esup-results-equal-p
-;;      '()
-;;      (list (make-esup-result "file" "sexp" :gc-time 30))
-;;      (list (make-esup-result "file" "sexp" :gc-time 50))))))
-
-;; (ert-deftest esup-results-equal-p__single-elem-mismatch__is-false ()
-;;   (should
-;;    (not
-;;     (esup-results-equal-p
-;;      '()
-;;      (list (make-esup-result "file" "sexp1"))
-;;      (list (make-esup-result "file" "sexp2"))))))
 
 ;; (ert-deftest esup-results-single-equal-p__ignoring-no-slots__is-equal ()
 ;;   (should
