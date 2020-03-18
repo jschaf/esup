@@ -1,3 +1,5 @@
+;; -*- mode: cask -*-
+
 (source gnu)
 (source melpa)
 
@@ -10,5 +12,4 @@
  (depends-on "dash")
  (depends-on "buttercup")
  (depends-on "undercover")
- (depends-on "el-mock")
  (depends-on "noflet"))
