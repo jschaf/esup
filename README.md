@@ -18,7 +18,7 @@ of Emacs, but this is NOT guaranteed.  Bug reports for problems related to using
 Esup with older versions of Emacs will most like not be addressed.
 
 The master of all the material is the Git repository at
-http://github.com/jschaf/esup .
+https://github.com/jschaf/esup .
 
 NOTE: The `master` branch will always contain the latest _unstable_ version.  If
 you wish to check older versions or formal, tagged release, please switch to the
@@ -170,11 +170,11 @@ make test
 
 [actions badge]: https://github.com/jschaf/esup/workflows/build/badge.svg
 [actions link]: https://github.com/jschaf/esup/actions
-[melpa badge]: http://melpa.org/packages/esup-badge.svg
-[melpa link]: http://melpa.org/#/esup
+[melpa badge]: https://melpa.org/packages/esup-badge.svg
+[melpa link]: https://melpa.org/#/esup
 [melpa-s badge]: https://stable.melpa.org/packages/esup-badge.svg
 [melpa-s link]: https://stable.melpa.org/#/esup
-[esup tags]: http://github.com/jschaf/esup/tags
+[esup tags]: https://github.com/jschaf/esup/tags
 [melpa help]: https://melpa.org/#/getting-started
 [cask]: https://cask.github.io
 [ccov badge]: https://codecov.io/gh/jschaf/esup/branch/master/graph/badge.svg
