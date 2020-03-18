@@ -32,15 +32,10 @@
 
 (require 'buttercup)
 
-(require 'time-date)
-
+(require 'time-date) ; TODO(serghei): W/o this all test fails (add to esup.el?)
 (require 'dash)      ; `-clone', `-table-flat', `-non-nil', `-map', etc
 (require 'cl-lib)    ; `cl-defmacro'
 (require 'noflet)    ; `noflet'
-(require 'el-mock)   ; TODO(serghei): Do we still need this?
-
-;; Make sure the exact Emacs version can be found in the build output
-(message "Running tests on Emacs %s" emacs-version)
 
 (defvar esup-debug-enabled nil
   "Enable debug messages for the test utilities.
