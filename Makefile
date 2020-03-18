@@ -1,47 +1,34 @@
-## Sane defaults
+# Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020 Joe Schafero
+#
+# This file is NOT part of GNU Emacs.
+#
+# License
+#
+# This file is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or (at your option) any later version.
+#
+# This file is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this file.  If not, see <https://www.gnu.org/licenses/>.
 
-SHELL := $(shell which bash)
-ROOT_DIR := $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-
-EMACS ?= emacs
-CASK ?= cask
-
-EMACSFLAGS ?=
-TESTFLAGS ?= --reporter ert+duration
-
-VERSION = undefined
-
-.DEFAULT_GOAL = build
-
-## File lists
-
-SRCS = esup-child.el esup.el
-OBJS = $(SRCS:.el=.elc)
-
-## Internal variables
-
-EMACSBATCH = $(EMACS) -Q --batch -L . $(EMACSFLAGS)
-RUNEMACS =
-
-## Program availability
-
-HAVE_CASK := $(shell sh -c "command -v $(CASK)")
-ifndef HAVE_CASK
-$(warning "$(CASK) is not available.  Please run make help")
-RUNEMACS = $(EMACSBATCH)
-else
-RUNEMACS = $(CASK) exec $(EMACSBATCH)
-VERSION = $(shell $(CASK) version)
-endif
+include default.mk
 
 %.elc: %.el
-	@$(RUNEMACS) --eval '(setq byte-compile-error-on-warn t)' -f batch-byte-compile $<
+	@printf "Compiling $<\n"
+	@$(RUNEMACS) --eval '(setq byte-compile-error-on-warn t)' \
+		-f batch-byte-compile $<
 
 ## Public targets
 
 .PHONY: .title
 .title:
-	$(info Esup $(VERSION))
+	@echo Esup $(VERSION)
 
 .PHONY: init
 init: Cask
@@ -49,7 +36,7 @@ init: Cask
 
 .PHONY: test
 test:
-	@$(CASK) exec ert-runner $(TESTFLAGS)
+	@$(CASK) exec buttercup $(TESTFLAGS)
 
 .PHONY: build
 build: $(OBJS)
@@ -57,7 +44,7 @@ build: $(OBJS)
 .PHONY: clean
 clean:
 	$(info Remove all byte compiled Elisp files...)
-	@$(RM) -f $(OBJS)
+	@$(CASK) clean-elc
 
 .PHONY: help
 help: .title

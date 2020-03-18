@@ -1,10 +1,9 @@
-;;; esup.el --- the Emacs StartUp Profiler (ESUP) -*- lexical-binding: t -*-
+;;; esup.el --- The Emacs StartUp Profiler (ESUP) -*- lexical-binding: t -*-
 
-;; Copyright (C) 2014-2017 Joe Schafer
+;; Copyright (C) 2014, 2015, 2016, 2017, 2018, 2019, 2020 Joe Schafero
 
 ;; Author: Joe Schafer <joe@jschaf.com>
 ;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
-;; Created: 19 May 2013
 ;; Version: 0.7.1
 ;; URL: http://github.com/jschaf/esup
 ;; Keywords: convenience, processes
