@@ -7,7 +7,7 @@
 ;; Version: 0.7.1
 ;; URL: https://github.com/jschaf/esup
 ;; Keywords: convenience, processes
-;; Package-Requires: ((cl-lib "0.5") (emacs "25"))
+;; Package-Requires: ((cl-lib "0.5") (s "1.2") (emacs "25.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -36,6 +36,8 @@
 
 (require 'benchmark)
 (require 'eieio)
+(require 's)
+(require 'seq)
 
 ;; We don't use :accesssor for class slots because it cause a
 ;; byte-compiler error even if we use the accessor.  This is fixed in
@@ -187,6 +189,19 @@ a complete result.")
     (setq str (replace-match "" t t str)))
   str)
 
+(defun esup-child-unindent (str)
+  "Remove common leading whitespace from each line of STR.
+If STR contains only whitespace, return an empty string."
+  (let* ((lines (s-lines str))
+         (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (s-trim-left s))))
+                                           lines))
+         (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (s-trim-left s))))
+                                         (or non-whitespace-lines [""]))))
+         (result (s-join "\n"
+                         (mapcar (lambda (s) (substring (s-pad-left n-to-trim " " s) n-to-trim))
+                                 lines))))
+    (if (= 0 (length (esup-child-chomp result))) "" result)))
+
 (defmacro with-esup-child-increasing-depth (&rest body)
   "Run BODY and with an incremented depth level.
 Decrement the depth level after complete."
@@ -315,7 +330,7 @@ BUFFER defaults to the current buffer."
 (defun esup-child-profile-sexp (start end)
   "Profile the sexp between START and END in the current buffer.
 Returns a list of class `esup-result'."
-  (let* ((sexp-string (esup-child-chomp (buffer-substring start end)))
+  (let* ((sexp-string (esup-child-unindent (buffer-substring start end)))
          (line-number (line-number-at-pos start))
          (file-name (buffer-file-name))
          sexp
