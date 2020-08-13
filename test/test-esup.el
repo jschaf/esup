@@ -6,6 +6,7 @@
 ;; Maintainer: Serghei Iakovlev <egrep@protonmail.ch>
 ;; Version: 0.7.1
 ;; URL: https://github.com/jschaf/esup
+;; Package-Requires: ((emacs "25.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -72,6 +73,17 @@
     (with-esup-mock
      '(:load-path ("/fake")
        :files (("/fake/foo-bar.el" . "")))
+
+     (should
+      (esup-results-equal-p
+       '(:gc-time :exec-time)
+       (esup-child-run "/fake/foo-bar.el" -1)
+       (list)))))
+
+  (it "handles whitespace-only file"
+    (with-esup-mock
+     '(:load-path ("/fake")
+       :files (("/fake/foo-bar.el" . "  ")))
 
      (should
       (esup-results-equal-p
