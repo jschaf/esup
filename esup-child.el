@@ -37,6 +37,7 @@
 (require 'benchmark)
 (require 'eieio)
 (require 'seq)
+(require 'subr-x)
 
 ;; We don't use :accesssor for class slots because it cause a
 ;; byte-compiler error even if we use the accessor.  This is fixed in
