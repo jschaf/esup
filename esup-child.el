@@ -188,17 +188,23 @@ a complete result.")
     (setq str (replace-match "" t t str)))
   str)
 
+(defun esup-s-pad-left (len padding s)
+  "If S is shorter than LEN, pad it with PADDING on the left."
+  (let ((extra (max 0 (- len (length s)))))
+    (concat (make-string extra (string-to-char padding))
+            s)))
+
 (defun esup-child-unindent (str)
   "Remove common leading whitespace from each line of STR.
 If STR contains only whitespace, return an empty string."
-  (let* ((lines (s-lines str))
-         (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (s-trim-left s))))
+  (let* ((lines (split-string str "\n"))
+         (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (string-trim-left s))))
                                            lines))
-         (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (s-trim-left s))))
+         (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (string-trim-left s))))
                                          (or non-whitespace-lines [""]))))
-         (result (s-join "\n"
-                         (mapcar (lambda (s) (substring (s-pad-left n-to-trim " " s) n-to-trim))
-                                 lines))))
+         (result (string-join (mapcar (lambda (s) (substring (esup-s-pad-left n-to-trim " " s) n-to-trim))
+                                      lines)
+                              "\n")))
     (if (= 0 (length (esup-child-chomp result))) "" result)))
 
 (defmacro with-esup-child-increasing-depth (&rest body)
