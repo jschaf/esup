@@ -197,7 +197,7 @@ a complete result.")
 (defun esup-child-unindent (str)
   "Remove common leading whitespace from each line of STR.
 If STR contains only whitespace, return an empty string."
-  (let* ((lines (split-string str "\n"))
+  (let* ((lines (split-string str "\\(\r\n\\|[\n\r]\\)"))
          (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (string-trim-left s))))
                                            lines))
          (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (string-trim-left s))))
