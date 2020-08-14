@@ -79,7 +79,7 @@ jobs:
       - name: Initialize the Project
         run: make init
 
-      - name: Byte Compile BNF Mode
+      - name: Byte Compile Esup
         run: make
 
       - name: Run Unit Tests (+falures)

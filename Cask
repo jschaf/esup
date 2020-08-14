@@ -7,7 +7,6 @@
 (files "esup-child.el")
 
 (depends-on "cl-lib" "0.5")
-(depends-on "s" "1.2")
 
 (development
  (depends-on "dash")

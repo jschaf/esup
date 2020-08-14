@@ -7,7 +7,7 @@
 ;; Version: 0.7.1
 ;; URL: https://github.com/jschaf/esup
 ;; Keywords: convenience, processes
-;; Package-Requires: ((cl-lib "0.5") (s "1.2") (emacs "25.1"))
+;; Package-Requires: ((cl-lib "0.5") (emacs "25.1"))
 
 ;; This file is NOT part of GNU Emacs.
 
@@ -36,8 +36,8 @@
 
 (require 'benchmark)
 (require 'eieio)
-(require 's)
 (require 'seq)
+(require 'subr-x)
 
 ;; We don't use :accesssor for class slots because it cause a
 ;; byte-compiler error even if we use the accessor.  This is fixed in
@@ -189,17 +189,23 @@ a complete result.")
     (setq str (replace-match "" t t str)))
   str)
 
+(defun esup-child-s-pad-left (len padding s)
+  "If S is shorter than LEN, pad it with PADDING on the left."
+  (let ((extra (max 0 (- len (length s)))))
+    (concat (make-string extra (string-to-char padding))
+            s)))
+
 (defun esup-child-unindent (str)
   "Remove common leading whitespace from each line of STR.
 If STR contains only whitespace, return an empty string."
-  (let* ((lines (s-lines str))
-         (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (s-trim-left s))))
+  (let* ((lines (split-string str "\\(\r\n\\|[\n\r]\\)"))
+         (non-whitespace-lines (seq-filter (lambda (s) (< 0 (length (string-trim-left s))))
                                            lines))
-         (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (s-trim-left s))))
+         (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (string-trim-left s))))
                                          (or non-whitespace-lines [""]))))
-         (result (s-join "\n"
-                         (mapcar (lambda (s) (substring (s-pad-left n-to-trim " " s) n-to-trim))
-                                 lines))))
+         (result (string-join (mapcar (lambda (s) (substring (esup-child-s-pad-left n-to-trim " " s) n-to-trim))
+                                      lines)
+                              "\n")))
     (if (= 0 (length (esup-child-chomp result))) "" result)))
 
 (defmacro with-esup-child-increasing-depth (&rest body)
