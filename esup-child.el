@@ -188,7 +188,7 @@ a complete result.")
     (setq str (replace-match "" t t str)))
   str)
 
-(defun esup-s-pad-left (len padding s)
+(defun esup-child-s-pad-left (len padding s)
   "If S is shorter than LEN, pad it with PADDING on the left."
   (let ((extra (max 0 (- len (length s)))))
     (concat (make-string extra (string-to-char padding))
@@ -202,7 +202,7 @@ If STR contains only whitespace, return an empty string."
                                            lines))
          (n-to-trim (apply #'min (mapcar (lambda (s) (- (length s) (length (string-trim-left s))))
                                          (or non-whitespace-lines [""]))))
-         (result (string-join (mapcar (lambda (s) (substring (esup-s-pad-left n-to-trim " " s) n-to-trim))
+         (result (string-join (mapcar (lambda (s) (substring (esup-child-s-pad-left n-to-trim " " s) n-to-trim))
                                       lines)
                               "\n")))
     (if (= 0 (length (esup-child-chomp result))) "" result)))
