@@ -85,7 +85,7 @@ Add following to your init file:
 ``` emacs-lisp
 (use-package esup
   :ensure t
-  ;; To use MELPA Stable use ":pin mepla-stable",
+  ;; To use MELPA Stable use ":pin melpa-stable",
   :pin melpa
   :commands (esup))
 ```
