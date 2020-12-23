@@ -86,8 +86,7 @@ Add following to your init file:
 (use-package esup
   :ensure t
   ;; To use MELPA Stable use ":pin melpa-stable",
-  :pin melpa
-  :commands (esup))
+  :pin melpa)
 ```
 
 ### El-Get
