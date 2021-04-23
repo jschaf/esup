@@ -61,16 +61,16 @@ jobs:
           version: ${{ matrix.emacs_version }}
 
       - name: Setup Cask
-        run: curl -fsSkL https://raw.github.com/cask/cask/master/go | python
+        run: git clone https://github.com/cask/cask ~/.cask
 
       - name: Set Environment Variables
         run: |
-          echo "::set-env name=PATH::$HOME/.cask/bin:$PATH"
+          echo "$HOME/.cask/bin" >> $GITHUB_PATH
 
           # Code coverage feature.
           # TODO(serghei): Enable this in tests.
           if [ "${{ matrix.emacs_version }}" != "snapshot" ]; then
-            echo "::set-env name=UNDERCOVER_FORCE::1"
+            echo UNDERCOVER_FORCE=1 >> $GITHUB_ENV
           fi
 
       - name: Fast Makefile Test
