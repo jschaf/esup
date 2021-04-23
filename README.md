@@ -3,7 +3,6 @@
 [![MELPA][melpa badge]][melpa link]
 [![MELPA Stable][melpa-s badge]][melpa-s link]
 [![Build Status][actions badge]][actions link]
-[![Coverage][ccov badge]][ccov link]
 
 Benchmark Emacs Startup time without ever leaving your Emacs.
 
@@ -177,5 +176,3 @@ make test
 [esup tags]: https://github.com/jschaf/esup/tags
 [melpa help]: https://melpa.org/#/getting-started
 [cask]: https://cask.github.io
-[ccov badge]: https://codecov.io/gh/jschaf/esup/branch/master/graph/badge.svg
-[ccov link]: https://codecov.io/gh/jschaf/esup
