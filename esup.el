@@ -215,6 +215,7 @@ Includes execution time, gc time and number of gc pauses."
 
 (define-derived-mode esup-mode
     special-mode "esup"
+  (buffer-disable-undo)
   (font-lock-mode 1))
 
 (define-key esup-mode-map (kbd "<return>") 'esup-visit-item)
@@ -389,8 +390,10 @@ Provides a useful default for SERVER, CONNECTION and MESSAGE."
   "Reset all variables and buffers for another run of `esup'."
   (setq esup-last-result-start-point 1)
   (with-current-buffer (get-buffer-create esup-server-log-buffer)
+    (buffer-disable-undo)
     (erase-buffer))
   (with-current-buffer (get-buffer-create esup-incoming-results-buffer)
+    (buffer-disable-undo)
     (erase-buffer))
   (setq esup-errors '())
   (when esup-server-process
@@ -565,8 +568,8 @@ ARGS is a list of extra command line arguments to pass to Emacs."
              do
              (erase-buffer)
              (insert (slot-value result 'expression-string))
-	     (font-lock-ensure)
-	     (setf (slot-value result 'expression-string) (buffer-string)))
+         (font-lock-ensure)
+         (setf (slot-value result 'expression-string) (buffer-string)))
     results))
 
 (defun esup-read-result (start-point)
