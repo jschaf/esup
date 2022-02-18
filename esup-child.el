@@ -380,7 +380,7 @@ SEXP-STRING appears in FILE-NAME."
                   ""
                 (car-safe (read-from-string sexp-string))))
         benchmark)
-    (setq benchmark (benchmark-run (eval sexp)))
+    (setq benchmark (benchmark-run (eval sexp lexical-binding)))
     (prog1
         (if esup-child-last-call-intercept-results
             ;; We intercepted the last call with advice on load or
